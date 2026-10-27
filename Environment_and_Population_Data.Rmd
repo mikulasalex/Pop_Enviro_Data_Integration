@@ -1,0 +1,2378 @@
+---
+title: "PAA Virtual Workshop Series:<br>Population & Environment Data"
+subtitle: "Part 2: Integrating High-Frequency Gridded Environmental<br>Data with Population and Survey Data"
+author: "Alex Mikulas, PhD<br>alex.mikulas@colorado.edu<br>University of Colorado Boulder's Institute of Behavioral Science<br>The Center for Aging, Health, & Environment (CACHE)"
+date: "October 13th, 2026"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    number_sections: false
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 90
+---
+
+![](logo_transparent.png){width="600px" style="display: block; margin: 20px auto;"}
+
+# How to Use this Resource -
+
+- View this training in your web browser as an easily readable HTML here [link to CACHE].
+
+- Download R Project file, RMarkdown file, and sample scripts from
+  [github.com/mikulasalex](https://github.com/mikulasalex/Pop_Enviro_Data_Integration/tree/main).
+
+At this point, you have downloaded the training materials, expanded the zipped file, and
+opened the R Project file titled **PAA_Virtual_Workshop_2026.Rproj**. You are currently
+reading the Rmarkdown file titled Environment_and_Population_Data.Rmd.
+
+This training is meant to be viewed interactively within the RStudio environment. When
+used as intended in RStudio, you can explore the RStudio interface, see what types of R
+objects you are creating, and practice engaging with them interactively. You can view a
+static version of the training without RStudio by accessing the published HTML document.
+
+When RStudio is open, view the Rmd. file using the "Visual" option. You can toggle between
+"Source" and "Visual" in the top left of this pane. The "Source" option is not displayed
+in an easily readable format, and does not allow you to execute the embedded code easily.
+For easier viewing, use the pane collapse button in the top right corner of each pane to
+collapse other windows. Expand the pane with this .Rmd document so it takes up an entire
+side of the RStudio work space.
+
+## Files in the R Project folder
+
+The folder contains an R Project file, an .Rmd file, folders for raw and processed data,
+and a folder for background scripts. You do not have to open any other document than this
+.Rmd file. But if you want to practice or experiment, you can open a new R script from
+File -\> New File -\> R Script. Use the blank script to practice writing code or copying
+and then tweaking the code that exists in section below. If you like, feel free to explore
+the other scripts, which largely perform the same processes as this walk through, but
+without the R Markdown formatting. Do not move files around in the folders, or the code
+may not be able to call in the data or background scripts.
+
+## Move through the training step by step
+
+Proceed with the training by reading through the .Rmd document. When you come to a code
+chunk, run the entire chunk by clicking the green triangle in the top right corner of the
+code chunk. Some code chunks just process data in the background, with no output displayed
+underneath the code. Run the first code chunk, titled "setup" to see code with not
+displayed output. Then, try running the next chunk titled "try_this_code_chunk", which
+outputs a topographic plot of a volcano below the code!
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.align = "center", fig.width = 7, fig.height = 4.5, out.width = "90%"
+)
+```
+
+```{r try_this_code_chunk_1, echo=TRUE, results='hide'}
+# press the green triangle in the top right corner to see a volcano!
+  image(volcano)
+```
+
+Code chunks can output multiple maps or information underneath below the code. When
+engaging with this document in RStudio, run the code chunk and view each output item by
+clicking between the small thumbnails. Try navigating between examples of topographic maps
+in the code chunk below!
+
+```{r try_this_code_chunk_2, echo=TRUE, results='hide'}
+# see several cool volcanos
+  demo(persp)
+
+```
+
+The code chunks are meant to be run in the order they appear as you read, so do not hop
+around too much. If you begin getting errors, go up to the previous code chunk and press
+the "Run All Chunks Above" option (downward arrow and green bar). This should execute the
+document in order from the beginning and correct any errors. It may take a few minutes to
+complete!
+
+# Workshop Overview -
+
+This PAA 2026 Virtual Workshop will demonstrate the general process for downloading,
+processing, and integrating environmental data with population and/or health outcome data.
+Workshop topics will cover three broad categories:
+
+1.  basic concepts in spatial data management and usage (spatial data types, spatial data
+    operations, geometric operations, coordinate reference systems, raster-vector
+    interactions).
+
+2.  intermediate skills for importing US Census data using an API.
+
+3.  Intermediate skills and concepts for integrating high-frequency vector-based (gridded)
+    and tabular environmental data with tabular and spatial longitudinal population data
+    and individual level survey data.
+
+## Goals and Outcomes
+
+1.  Participants will gain a working knowledge of basic and intermediate GIS data
+    processing and integration, a working R script that they can implement within their
+    own research endeavors, and references to additional R-based resources for further
+    training.
+
+2.  The end result of this document are several use-case examples of workflows that
+    generate analysis-ready data sets. Each include population or survey data that is
+    successfully integrated with wildfire smoke measures at different spatial and temporal
+    specificity.
+
+3.  Users can use code from this RMarkdown file and associated R scripts to create their
+    own project workflows. Geographic areas, time frames, population/survey data, and
+    other analytic aspects of the coding can be modified to fit the researcher's use
+    cases. With minor edits, the user can apply the same workflow to other high-frequency
+    environmental data, such as heat, precipitation, or land coverage.
+
+4.  Users will have a list of additional online resources from CACHE and other reputable R
+    coding and spatial data professionals.
+
+## About the Instructor
+
+My name is Alex Mikulas. I have a PhD in Community and Environmental Sociology from the
+University of Wisconsin-Madison, with a focus on spatial demography, geography, and
+inequality. I am the postdoctoral associate for the [Center for Aging, Health, &
+Environment (CACHE)](https://agingclimatehealth.org/) at the University of Colorado
+Boulder's [Institute of Behavioral Science](https://ibs.colorado.edu/) (IBS). I am
+affiliated with the IBS [Population
+Program](https://ibs.colorado.edu/programs-and-centers/population/). I work closely with
+environmental sociologists and demographers, Dr. [Lori
+Hunter](https://ibsweb.colorado.edu/lori-hunter/) and Dr. [Deborah
+Balk](https://www.baruch.cuny.edu/profiles/faculty/Deborah-Balk). Drs. Hunter and Balk are
+CACHE Co-PIs.
+
+## About CACHE
+
+CACHE is an NIH/NIA funded virtual research center. Our purpose is to facilitate research
+and foster interdisciplinary collaborations between researchers working at the nexus of
+aging, health and environment. CACHE achieves these aims through targeted
+interdisciplinary training, information and resource sharing, and investments in research
+support.
+
+- [**Newsletter**](http://eepurl.com/i7kp2g) with opportunities, resources, and events
+
+- [**Code & Data**](https://agingclimatehealth.org/code-and-data/) Resources
+
+- [**What Am I Reading?**](https://agingclimatehealth.org/what-am-i-reading/) research
+  synthesis and briefs
+
+- Regularly scheduled
+  [**"under-the-hood"**](https://agingclimatehealth.org/cache-online-seminars/) virtual
+  research seminars
+
+- [**Training and Workshop content**](https://agingclimatehealth.org/workshops/)
+
+- [**Working Groups**](https://agingclimatehealth.org/working-groups/)
+
+- [**Demonstration Projects**](https://agingclimatehealth.org/demo-projects/)
+
+CACHE is funded by the National Institute on Aging of the National Institutes of Health,
+award number 1R33AG104567-01 “CACHE: Supporting Interdisciplinary Inclusion of Context in
+Aging and Health Research."
+
+## Workshop Data Sources
+
+This workshop uses the following population and survey data sources:
+
+1.  [**US Census Bureau American Community Survey 5-year estimates, 2014 -
+    2023**](https://www.census.gov/programs-surveys/acs.html): longitudinal survey of
+    American households, available at course and fine spatial scales. Accessed via API
+    using the `tidycensus` R package.
+
+2.  Example generated data of a multi-wave, longitudinal health study: Sample data
+    generated for 1000 participants over three waves between 2015 and 2023.
+
+These data will be integrated with the following wildfire smoke data:
+
+1.  [**Stanford Echolab Wildfire Smoke Plume
+    Data**](https://www.stanfordecholab.com/wildfire_smoke): United states wildfire smoke
+    estimates, contiguous US; 2006-2023; resolutions at the 10km grid, US county, US
+    census tract, and US Zip Code levels.
+
+# Part 1: Set Up Environment -
+
+First we will establish the RStudio working environment by setting the correct file paths
+and loading the necessary packages. The .zip file consists of a single folder with all the
+required RMarkdown scripts, R scripts, data folders, output folders, and an RStudio
+Project file (PAA_VirtWorkshop_2026.Rproj). Do not change any folder organization within
+the zipped folder.
+
+## Load Package Libraries
+
+- First, load the necessary R packages for the entire analysis. These packages were
+  already installed onto your machine prior to this workshop when you completed the
+  workshop preparation materials.
+
+- `pacman` is a package that easily installs updates, and loads packages in a single
+  command.
+
+- `here` is a package that uses uniform format for file directories, which ensures that
+  the code is portable. This practice avoids hard-coding file paths, a common source of
+  errors when sharing code.
+
+- `tidyverse`, `lubridate`, `magrittr`, `broom`, `purr`, `haven`, and `janitor` are data
+  wrangling packages.
+
+- `sf` is the primary package for reading, editing, and wrangling spatial data.
+  `rmapshaper` helps with simplifying complex geographies.
+
+- `raster`, `terra`, `stars`, and `exactextractr` are packages to handle and manipulate
+  raster data and efficiently access high-frequency raster data.
+
+- `slider` helps compute running averages.
+
+- `spdep`, and `spatialreg` are used for spatial regression analysis.
+
+- `tmap` is a simple mapping package.
+
+```{r load_packages, echo=TRUE}
+# clear graphics demonstration objects
+  rm(list = ls())
+  
+# install pacman package
+  # install.packages("pacman")
+  library(pacman)
+
+# use pacman::p_load() to load necessary packages
+  p_load(here, # file directory helper enabling cross platform directory uses
+         tidyverse, lubridate, magrittr, broom, purrr, haven, janitor, # data management
+         sf, raster, stars, exactextractr, terra, rmapshaper, # spatial processing
+         slider, # running averages
+         spdep, spatialreg, # spatial analysis
+         tidycensus, ipumsr, tigris, # external census data
+         stargazer, knitr, # tables/reports
+         tmap # simple mapping
+        )
+```
+
+## Set Working Directory
+
+The `here::i_am()` command sets the root directory path for whichever location that the
+stated file is located. Then, the `here()` command will show you your current working
+directory. This is the local folder location where all your folders, files, data, and
+scripts are stored and called throughout the analysis.
+
+```{r working_directory, echo=TRUE}
+# set the working directory
+  here::i_am("Environment_and_Population_Data.Rmd")
+  here() # confirm location is correct
+```
+
+# Part 2: Primer for Spatial Data -
+
+## What is Spatial Data?
+
+```{r spatial_data_primer1, echo = FALSE, include = FALSE}
+  source("scripts/spatial_primer.R", local = knitr::knit_global())
+```
+
+Spatial data is any type of data that is associated to a specific location, or "spatially
+located". Most data is spatial! It just may not have the level of specificity, or correct
+data fields, to use in formal spatial data processing or analysis (known as GIS, or
+Geographic Information System). But data does have correct GIS formatting and structure,
+it can be referenced to, associated with, and integrated with other spatial data sets.
+
+If a data set is "spatial" then it has information (variables, metadata, etc.) about the
+location and shape of the cases in the data. Survey data may have a field with the address
+of the respondent, which can be converted to latitude and longitude spatial data.
+Aggregated county data may have the FIPS code for each county, which can be merged with a
+data file describing the shape of the county. Files that describe the shape of geographic
+features (points, lines, polygons) are called shapefiles.
+
+## Vector Data
+
+Vector data are any data that have an explicit shape and location associated with them.
+Examples include polygons, like counties and census tracts, lines, like rivers and roads,
+or points, like addresses. Most vector data is formatted as a shapefile, which comes as a
+folder with a collection of files used to create the metadata required for mapping
+geographic data. When you read a shapefile into R, use the `st_read()` function, and
+indicate the .shp file in the `file =` parameter.
+
+In R, a shapefile looks like a simple data.frame object. But, its R object class is `sf`,
+or Simple Features. This means the data set has additional fields and metadata that allow
+you to represent it geographically and perform spatial operations. The shape and location
+of the rows or observations in a shapefile are described with a "*geometry*" or "*geom*"
+column, which have specially formatted data representing an ordered list of one or more
+point coordinates (longitude and latitude).
+
+**Point data** are the most simple type of vector data. Let's map all the airports in
+Wisconsin, and then examine the underlying dataframe.
+
+```{r spatial_data_primer2, echo = TRUE}
+  ggplot() +
+    geom_sf(data = wi_airports) +
+    theme_minimal()
+  
+  head(wi_airports)
+  str(wi_airports)
+```
+
+Note the various information available from the `head()` command and `str()` command. We
+can tell that that each airport has its own row in the data. The data is formatted as a a
+"simple feature" collection, meaning it has metadata that defines it as a map-able spatial
+data set. Each row has a *geometry* column with the longitude/latitude. POINT indicates
+that the rows in the data represent a single geographic coordinate.
+
+**Line data** represent a series of geographic coordinates that are in a certain order -
+like a children's connect the dot drawing activity. Let's map the main interstates and
+large roads in Wisconsin, take look at the data structure, and investigate a *geometry*
+column.
+
+```{r spatial_data_primer3, echo = TRUE}
+  ggplot() +
+    geom_sf(data = wi_roads) +
+    theme_minimal()
+  
+  str(wi_roads)
+```
+
+Each road has one or more rows in the data representing road segments. The geometry column
+indicates that the data is a series of longitude/latitude points connected in a specific
+order. Use the command `view(wi_roads)` to explore the dataframe and the geometry column.
+Note that the geometry column is a `list` object that stores long/lat data in a specific
+order.
+
+**Polygon data** is similar to line data, but the dots connect to form a polygon. Some
+boundaries are more complicated than a simple polygon. For instance, the Apostle Islands
+in Lake Superior are part of Wisconsin's Ashland and Bayfield counties. To capture the
+multiple polygons that make up these counties, the geometry column indicates MULTIPOLYGON,
+and is formatted to connect certain groups of long/lats in a certain order. Let's take a
+look at a few examples.
+
+```{r spatial_data_primer4, echo = TRUE}
+  ggplot() +
+    geom_sf(data = wi) +
+    labs(title = "Wisconsin State Border") +
+    theme_minimal()
+
+  ggplot() +
+    geom_sf(data = wi_counties) +
+    labs(title = "Wisconsin County Borders") +
+    theme_minimal()
+  
+  ggplot() +
+    geom_sf(data = ash_bay_counties) +
+    labs(title = "Ashland and Bayfield County Borders") +
+    theme_minimal()
+```
+
+Again, use the `View(ash_bay_counties)` command in the console to see the structure of the
+data for these counties. The geometry column is formatted as a list of lists, each with a
+set of long/lats denoting the boundaries of every distinct polygon in the county.
+
+**Gridded data** is a special kind of vector data. It does not use administrative
+boundaries for each of the rows in the data. Instead, it uses a uniform grid that
+completely covers a large swath of area. Each cell in the grid is the same size and is
+represented as one row in a shapefile. Below, we map a shapefile that contains
+cartographic boundary data for a 10 kilometer grid that covers the state of Wisconsin.
+
+```{r spatial_data_primer5, echo = TRUE}
+  ggplot() +
+    geom_sf(data = wi_10km) +
+    labs(title = "10 Kilometer Grid, Wisconsin") +
+    theme_minimal()
+```
+
+Using `ggplot` or other cartographic mapping packages, R can easily map vector data, and
+overlay multiple vector layers to represent a more detailed map. Here is a basic example,
+and more complex maps will appear later in the workshop.
+
+```{r spatial_data_primer6, echo = TRUE}
+# plot wisconsin vector data types
+  ggplot() +
+    geom_sf(data = wi,
+            color = "darkolivegreen",
+            linewidth = 1) + 
+    geom_sf(data = wi_counties,
+            color = "forestgreen",
+            linewidth = 0.5,
+            fill = "grey80") +
+    geom_sf(data = wi_airports,
+            color = "royalblue",
+            shape = 18) +
+    geom_sf(data = wi_roads,
+            color = "black",
+            linewidth = 0.5) +
+    labs(title = "Wisconsin",
+         subtitle = "Counties (green)  | Roads (black)  | Airports (blue)") +
+    theme_minimal()
+```
+
+### Vector attribute data
+
+Shapefiles often include attribute data for each row of geography in a spatial data set.
+These are tabular columns akin to those in a standard dataframe. Attribute data can be
+character-based geographic identifiers (like county names or codes such as FIPS) or any
+other data that is associated with each row of the point, line, or polygon geometry.
+County level population data, for instance, might be included as attribute data columns in
+a county shapefile. Let's map the attribute data that measure cthe county land area in
+square meters, ALAND, data using ggplot. Then lets map the attribute variable attribute_1,
+of the 10km gridded data. Both maps are examples of choropleth maps, which display
+continuous variable values for each polygon as a color shade along a spectrum.
+
+```{r spatial_data_primer7, echo = TRUE}
+# plot land area attribute
+  ggplot() +
+    geom_sf(data = wi_counties,
+            aes(fill = ALAND),
+            linewidth = 0.5) +
+    scale_fill_viridis_c() +
+    labs(title = "Wisconsin Counties",
+         subtitle = "shaded by land area") +
+    theme_minimal()
+  
+  ggplot() +
+    geom_sf(data = wi_10km,
+            aes(fill = attribute_1),
+            linewidth = 0.5) +
+    scale_fill_viridis_c() +
+    labs(title = "Wisconsin 10km Grid",
+         subtitle = "shaded by attribute_1") +
+    theme_minimal()
+```
+
+## Raster Data (continuous, high frequency, spatio-temporal)
+
+Raster data are continuous forms of spatial data. Rather than being a distinct shape or
+point, each row in the data represent a single measure of a variable for a specific
+section in a grid. Raster data is very similar to vector gridded data, but at a much more
+detailed spatial scale. Rather than a large grid, raster data is better conceptualized as
+an image with pixels. Each pixel in the large image is a datapoint for the small area of
+land that it covers. A raster data set for a single variable for a single moment in time
+is called a **rasterlayer**.
+
+Some raster data sets represent repeated measures at very high frequencies. For instance,
+some temperature data sets have a raster layer for every hour of every day of every year,
+all at a 1x1 meter resolution. Each hour of data represents millions of data points.
+Raster layers of repeated measures are often "stacked" into an R object called a
+RasterBrick or a data cube. These data are very massive in size and present challenges for
+extracting the appropriate data into tabular or spatial population ans survey data.
+
+There are several packages that make working with raster and RasterBrick data easier.
+`raster`, `stars`, and `terra` are the most common and universal for processing and raster
+data management. `exactextractr` is best for accessing specific layers and pixels out of
+large RasterBricks.
+
+This workshop is not intended to cover raster data processing and integration. Instead, we
+will focus on gridded vector based high-frequency data, which will demonstrate the
+utility - and limitations - of gridded data. Below are CACHE affiliated resources to learn
+more about processing raster-based environmental data.
+
+### CACHE resources on raster data processing
+
+- [**exactextractr R Package**](https://github.com/isciences/exactextractr/tree/master) -
+  efficient functions for integrating raster and vector data.
+
+- [**Measuring Heat for Population
+  Research**](https://agingclimatehealth.org/wp-content/uploads/2026/05/For-Website_MIM-PAA2026-Agenda-2.pdf) -
+  materials from a 2026 PAA member initiated meeting and workshop
+
+- [**Daily Temperature Processing and
+  Analysis**](https://agingclimatehealth.org/daily-temperature-data-processing-and-analysis-an-example-for-new-york-city/)
+  by Selene Ozdogan
+
+- [**Severe Heat Days Using the Universal Thermal Comfort
+  Index**](https://agingclimatehealth.org/severe-heat-days-using-the-universal-thermal-comfort-index/)
+  by Marcial Yangali
+
+- [**Joining ACAG Annual Estimates of PM2.5 with Social Determinants of Health (SDOH)
+  data**](https://agingclimatehealth.org/joining-acag-annual-estimates-of-pm2-5-with-social-determinants-of-health-sdoh-data/)
+  by Zoé Haskell-Craig and Priyanka deSouza
+
+## Spatial Metadata
+
+What differentiates regular tabular data - even tabular data with a longitude and latitude
+colums - from spatial data is that spatial data has particular metadata associated with
+the data file: the coordinate reference system and the shapefile projection. Both provide
+important information for how your softward should read, interpret, and visualize the
+latitude and longitude data in the geometry column.
+
+### Coordinate Reference Systems (CRS)
+
+A CRS is like a shared language for interpreting geographic coordinates. When spatial data
+sets have the same CRS metadata, they both interpret the geometry columns in the same way.
+Thus, they are able to "talk" to one another because they have a shared understanding of
+the geographic data points in the shapefile. Therefore, when you perform a spatial data
+operation or geometric operation on two different shapefiles, they are "layered" correctly
+and any overlapping or intersecting geometries can be accurately computed.
+
+If two shapefiles do not have the same CRS, they will not be "layered" correctly during
+geocomputation. Often, this will produce an error message. But, in some cases, the
+procedure will execute on misaligned geometries, created faulty data. Let's examine the
+CRS metadata of the `wi_counties` shapefile.
+
+```{r spatial_data_primer8, echo = TRUE}
+# inspect a sf object CRS
+  st_crs(wi_counties)
+```
+
+Note the CRS metadata has multiple parameters that define how the geometries are meant to
+be read and what the projection is.
+
+### Shapefile Projections
+
+A shapefile's projection are the parameters for how the mapping software will visualize
+your data. While a CRS helps GIS software interpret shapefile geometries, the projection
+tells the GIS software where the geometries are meant to be displayed when mapped. Because
+the earth is round, but we view maps on flat, 2-dimensional screens, the geographic shapes
+will always have some level of distortion. A shapefile projections sets the parameters for
+where to center the data on the screen, and how to distort the map boundaries to display
+in a flat screen. Consider the examples below of the same shapefile but visualized using
+different CRS and projection metadata.
+
+```{r spatial_primer9, echo=TRUE}
+# plot Mercator projection
+  world_mercator <- st_transform(world, crs = 3857)
+
+  ggplot() +
+    geom_sf(data = world_mercator) +
+    labs(title = "World, mercator projection") +
+    theme_minimal()
+  
+# assign Mollweide projection parameter to world
+  world_mollweide = st_transform(world, crs = "+proj=moll")
+  
+  ggplot() +
+    geom_sf(data = world_mollweide) +
+    labs(title = "World, Mollenweide") +
+  theme_minimal()
+  
+# assign equal earth projection
+  world_ea <- st_transform(world, crs = 8857)
+  
+  ggplot() +
+    geom_sf(data = world_ea) +
+    labs(title = "World, Equal Earth") +
+  theme_minimal()
+  
+# assign custom projection to world
+  world_cust = st_transform(world, crs = "+proj=laea +x_0=0 +y_0=0 +lon_0=-74 +lat_0=40")
+
+  ggplot() +
+    geom_sf(data = world_cust) +
+    labs(title = "World, custom projection parameters") +
+    theme_minimal()
+```
+
+Projections are the culprit for why Greenland, for example, often looks so large on a
+flattened map, or why the US can appear to have a flat northern border, or a curved
+northern border (see the [latest
+controversy](https://news.un.org/en/story/2026/09/1168284) over [official projection
+standards](https://www.aljazeera.com/news/2026/9/5/how-big-is-africa-really-why-the-un-voted-to-change-the-world-map)
+at the United Nations).
+
+### Changing CRS and Projections
+
+Finally, mapping functions like ggplot will automatically transform and re-project all
+shapefiles used in the creation of the figure with a uniform projection. This is helpful
+for cartographic purposes, but do not assume that all shapefiles have the same CRS because
+they look accurate in a ggplot figure.
+
+It is best to check each shapefile and re-project any errant CRS settings so all
+shapefiles in your project have the same CRS. You can convert the CRS of any `sf` R object
+with the command `st_transform()`. A uniform CRS across all your shapefiles is critical
+when performing spatial data operations and geometric operations, which are discussed in
+the next sections.
+
+```{r spatial_data_primer8.5, echo = TRUE}
+# save a CRS setting from a given sf object (here, wi_counties) as standalone R object
+  my_special_crs_object <- st_crs(wi_counties)
+
+# apply your crs object to other sf objects
+  wi_airports <- st_transform(wi_airports, crs = my_special_crs_object)
+  
+# confirm that your county and airport sf objects have the same CRS
+  st_crs(wi_counties) == st_crs(wi_airports)
+```
+
+Some CRSs and projections are best suited for large areas like states or countries, while
+others are best suited for smaller areas like blocks or tracts. There is not a universal
+CRS/projection or a single correct CRS/projection. Instead, choose those that are best
+suited for your project based on the geographic scope, the location of your geometries,
+and the type of mapping you intend. If you are importing shapefiles from a reputable,
+standardized source like the US Census, the existing CRS is usually appropriate. Learn
+more about [when to re-project or change your
+CRS](https://r.geocompx.org/reproj-geo-data#whenproject). If you need to change your CRS,
+see the [R package
+crsuggest](https://github.com/walkerke/crsuggesthttps://github.com/walkerke/crsuggest) for
+help with deciding an appropriate choice.
+
+## Spatial Data Operations
+
+The power of spatial data is not just that you can represent it cartographically. The
+underlying spatial structure of the data (coordinates in space) allows for data sets that
+do not share linking IDs or unique keys to integrate based on their spatial relationships.
+For example, the `wi_airports` data cannot link with the `wi_counties` data because
+neither have a shared common identifier. The `wi_airports` data does not, for example have
+an address or county variable. But using the spatial structure of both data, we can locate
+airports in space and counties in space, and then associate the data based on where each
+county and each airport is in relation to one another. This is an example of a **spatial
+data operation**, where the location and shape of the data sets are used to modify or
+enrich one another.
+
+**Example: Create a variable for the number of airports per county in Wisconsin**. We can
+do this by mutating a new variable in the `wi_counties` data set that performs the spatial
+data operation `st_intersects`.
+
+```{r spatial_data_primer10, echo = TRUE}
+# intersect airports into counties
+  wi_counties  <- wi_counties |> 
+    mutate(n_airports = lengths(st_intersects(wi_counties, wi_airports)))
+  
+# plot county-level variable for number of airports
+  ggplot() +
+    geom_sf(data = wi_counties,
+            aes(fill = n_airports)) +
+    labs(title = "Airports in WI Counties",
+         fill = "Number of Airports\nin county") +
+    theme_minimal()
+```
+
+**Example: Assign a county FIPS to each airport**. We can use another spatial data
+operation to enrich the `wi_airports` data set. We will create a simplified counties
+dataframe that is just the county FIPS code and the spatial geometry. Then, we will
+perform a spatial join between the `wi_airports` and the temporary county shapefile. Now
+the `wi_airports` data has a GEOID column denoting the county that each airport is in.
+
+```{r spatial_data_primer11, echo = TRUE}
+# make a temp sf copunty file with only GEOID attribute column
+  temp <- wi_counties |> 
+    dplyr::select(GEOID)
+
+# join temp attributes (just GEOID) to airports sf object
+  wi_airports <- st_join(wi_airports, temp)
+  
+# inspect column names to confirm that GEOID joined to wi_airports
+  colnames(wi_airports)
+```
+
+There are many different types of spatial data operations in the `sf` package. See the
+list of resources at the end of Part 1 document for a deeper dive into spatial data
+operations.
+
+## Geometric Operations
+
+The geometry column in a shapefile described the spatial extent of each observation in
+your data. Sometimes, it is necessary to edit the geometries in your data based on project
+needs. For instance, you may need to add a buffer radius to point data, or analyze only
+the intersecting areas of two polygon shapefiles. These can be accomplished through
+**geometric operations**, or processes that add to or edit vertices in the geometry column
+of shapefiles.
+
+### Alter geometries
+
+Some geometric operations drastically alter the shape of geometries.
+
+**Example: convert a point data set to a polygon with a radius of 5 kilometers.** First,
+check the CRS of the point shapefile to see the units used with the `st_crs()` command.
+Then use the `st_buffer()` command to convert the point geometries to polygons. View the
+geometry types before and after with the `str()` command.
+
+```{r spatial_data_primer12, echo = TRUE}
+  st_crs(wi_airports)
+  str(wi_airports)
+  
+# 5000 meter radius buffer
+  wi_airport_buffer <- st_buffer(wi_airports, 5000)  
+  
+  str(wi_airport_buffer)
+  
+  ggplot() +
+    geom_sf(data = wi_airport_buffer) +
+    labs(title = "Airport location with 5km buffer area") +
+    theme_minimal()
+```
+
+**Example: reduce polygon data to point data.** `st_centroid` converts polygon geometry to
+the geometric point of the polygon. `st_point_on_survace` converts polygon geometry to a
+point that exits within the boundaries of the polygon, attempting to be near the centroid.
+This is a useful option if your polygons are shaped in such a way that the geometric
+centroid falls outside of the borders of the polygon geometry (ie: a shape like the sliver
+of a moon).
+
+```{r spatial_data_primer13, echo = TRUE}
+  wi_county_points1 <- st_centroid(wi_counties)
+  
+  wi_county_points2 <- st_point_on_surface(wi_counties)
+  
+  ggplot() +
+  # background county layer
+    geom_sf(data = wi_counties) +
+  # centroid layer
+    geom_sf(data = wi_county_points1,
+            color = "blue") +
+  # point-in-poly layer
+    geom_sf(data = wi_county_points2,
+            color = "red") +
+    labs(title = "WI counties with point data",
+         subtitle = "Blue = Geometric Centroid\nRed = lat/long within county border") +
+    theme_minimal()
+```
+
+### Simplify or repair geometries
+
+Other geometric operations edit and repair the shape of geometries.
+
+**Example: Simplify geometries.** Sometimes, vector data is extremely detailed (see the
+[coastline paradox](https://en.wikipedia.org/wiki/Coastline_paradox)...). Certain
+shapefiles may have a high degree of cartographic generalization, where the polygon and
+line geometries may have far to many vertices than are required for your analysis or
+mapping goals. When you are working with large spatial data sets, high cartographic
+generalization can consume computing power and memory because the geometry column may have
+thousands of lat/long coordinates per row.
+
+One solution is to simplify, or generalize, your shapefile by removing vertices in your
+geometries that are redundant or provide too fine of shape detail. `sf::st_simplify` can
+perfrom this function. However, it does not retain shared boundaries, so simplyfying can
+separate adjoining polygons slightly. Use `rmapshaper` package to simplify geometries, and
+also retain boundary connections. These procedures can take a long time to complete. Once
+you have a shapefile simplified to your preference, be sure to save it as a master
+shapefile for that geography.
+
+```{r spatial_data_primer14, echo = TRUE}
+# view county maps
+  ggplot() +
+    geom_sf(data = wi_counties) +
+    labs(title = "No simplification") +
+    theme_minimal()
+  
+# simplify 1: do not preserve topology
+  counties_simple_st <- st_simplify(
+    wi_counties, # shapefile to simplify
+    dTolerance = 3e3) # resolution to 3000 meters
+  
+# plot
+  ggplot() +
+    geom_sf(data = counties_simple_st) +
+    labs(title = "st_simplify() at 3000m resolution") +
+    theme_minimal()
+  
+# simplify 2: preserve topology
+  counties_simple_ms <- ms_simplify(
+    wi_counties, # sf object to simplify
+    keep = 0.05, # proportion of vertices to retain
+    snap = TRUE, # snap vertices at small distances to fix misallignment
+    keep_shapes = TRUE) # prevent small shapes from disappearing (islands)
+  
+# plot
+  ggplot() +
+    geom_sf(data = counties_simple_ms) +
+    labs(title = "ms_simplify() retaining only 5% of vertices") +
+    theme_minimal()
+
+# view shapefile sizes
+  object.size(wi_counties)
+  object.size(counties_simple_st)
+  object.size(counties_simple_ms)
+```
+
+Notice the borders along lakes and rivers have smoothed dramatically in both simplified
+boundaries. But, the `st_simplify()` process left small gaps between counties, which can
+impact mapping aesthetics, as well as any spatial statistics. `ms_simplify()` retains
+boundaries. Both simplified shapefiles are 1/3 the total size of wi_counties.
+Simplification is very helpful for shapefiles with many rows of line, polygon, and
+multipolygon geometries.
+
+**Example: repair broken or topologically impossible geometries.** Finally, We need to
+make sure that our geometries - the geometry variable for each row in our spatial data
+that describes the shape and location of the data - are topologically valid. You can use
+`st_is_valid` to confirm valid geometries. This function evaluates each geometry value for
+structural errors such as self-intersecting polygons, holes outside boundary lines, or an
+insufficient number of coordinate points. It returns a vector of TRUE or FALSE for each
+geometery. Invalid geometries will often cause geocomputation and mapping errors. If you a
+re having trouble with unknown errors, make sure your geometries are valid.
+
+If your geometries are not valid, repair them with `st_make_valid()`. For large
+shapefiles, `st_make_valid()` can take a long time. Once you repair your geometries, be
+sure to save the repaired file as a master shapefile.
+
+```{r spatial_data_primer15, echo = TRUE}
+# check to see if geometries are valid for each county. 
+# returns vector of Valid/not Valid Geometry
+  st_is_valid(wi_counties, reason = TRUE)
+
+# logical check for all all geometries in a shapefile. 
+# useful for shapfiles with lots of rows
+  all((st_is_valid(wi_counties, reason = TRUE)) == "Valid Geometry")
+  
+# if any geomtries are not valid, repair
+  wi_counties_valid <- st_make_valid(wi_counties)
+```
+
+## Best Practices for Spatial Data Workflows
+
+### 1. Drop geometries for tabular data wrangling
+
+If you are performing lots of data wrangling on tabular attribute data - say, with large,
+tract-level US Census or American Community Survey data - it is best to perform these
+functions on tibble, data.table, or other non-spatial R data object classes. The geometry
+column in a large sf class R object (large N of polygon or line data, specifically)
+dramatically slows down complicated tabular data wrangling processes. To avoid this,
+separate your tabular data from your geometries, and retain the linking geographic
+identifier column within each dataframe. Once you have completed data wrangling, you can
+append the geometries and sf class back to your tabular data using the linking identifier
+column.
+
+An ideal way to do this is to duplicate your large sf object, `sf_data_object`, into a
+tabular data object using code like this: `tabular_data_object <- sf_data_object`.
+
+Then, take the `sf_data_object` and keep only the geometry column and the spatially
+relevant variables (like geographic identifiers, land and water area, etc.). If your data
+is time series data in long format, then reduce the rows to just one per geometry. This
+new, master shapefile should be a much smaller sized shapefile with one entry per unique
+geometry, the geometry column, the geographic identifier variables like FIPS or GEOIDs,
+and any associated spatial variables.
+
+Next, take the `tabular_data_object` to a data.frame object and retain just the tabular
+data and the geographic identifier. Drop the geometry column and other spatial variables.
+Perform all your tabular and non-spatial data wrangling on this data.frame object.
+
+Once all your tabular data wrangling is complete, perform a `right_join()` to convert your
+data.frame back into a sf class R object with tract geometries.
+
+This process can be implemented for any data or geographic scale, and is especially
+helpful for timeseries and large N survey data sets that have a LINE or
+POLYGON/MULTIPOLYGON geometry column. Just be sure to retain the correct linkage variable
+to re-associate your geometries to your attribute data.
+
+### 2. Establish a master CRS for your project
+
+As you import more and more shapefiles into your environment, be mindful of the CRS
+assigned to each. Shapefiles with different CRS metadata often produce software errors -
+or worse, hidden bad data! - when you interact them using spatial data operations and
+geometric operations. Avoid these issued by establishing one CRS for the entire project.
+
+Determine the CRS that is most suitable for your analysis, and define it as an an object
+in your environment using code like this:
+`master_crs_object <- st_crs([sf object that has your preferred CRS])` .
+
+Apply your master CRS to all your shapefiles once you import them using a command similar
+to this:
+`any_project_shapfile <- st_transform(any_project_shapefile, crs = master_crs_object)`
+
+### 3. Simplify vector and line data
+
+If you have shapefiles that are too finely generalized for your analysis, simplify them
+using `sf::st_simplify()` or `rmapshaper::ms_simplify()` functions. Recal that the
+`rmapshaper` package is "topographically aware", meaning it will not create any gaps
+between shared boundaries of polygon or line geometries. `sf::st_simplify()` does not have
+this capability. If you simplify any shapefile, be sure to append the same set of
+simplified geometries back to any tabular data after tabular data wrangling.
+
+### 4. Validate and repair geometries
+
+Make sure that your shapefile geometries - the geometry variable for each row in our
+spatial data that describes the shape and location of the data - are topologically valid.
+Shapefiles from non-standardized sources (like user generated data, locally sourced
+shapefiles, etc.) often have errors in their geometries. Additionally, shapfiles that have
+undergone many geometric operations (like simplify, union, intersections, masking, and
+clipping) may also have topographical errors.
+
+Use the `sf::st_is_valid()` command to confirm valid geometries. Use the
+`sf::st_make_valid()` command to repair any broken geometries in your shapefiles. If you
+repair a shapefile, be sure to append the same set of repaired geometries back to any
+tabular data after tabular data wrangling.
+
+### 5. Use master shapefiles
+
+If you are using lots of differnet data sets at different geographic levels, and for
+different years (say, counties and census tracts from 1990 to 2020) then it is best
+practice to have a master shapefile for each set of boundaries present in the data. Apply
+your `master_crs_object` to each master shapefile, and simplify your master shapefiles to
+the level of generalization needed for the project, and validate and repair each master
+shapefile.
+
+Then, whenever you need to spatialize one of the tabular data sets, simply `right_join()`
+it with the correct geography. This way, you use a consistent CRS, and validated,
+simplified geometries for all your data sets, ensuring that any spatial data operations or
+geometric processing will run smoothly.
+
+### 5. Keep your work space clean and tidy
+
+Finally, remove objects from your environment that you no longer need in your analysis, or
+save larger objects and call them back in later. This keeps your space manageable, and
+saves working memory. The Primer for Spatial Data is complete, so let's run a few
+housekeeping tasks to clean up.
+
+```{r spatial_data_primer16, echo = TRUE}
+# remove R objects that are no longer needed
+  rm(us_states, roads, 
+     wi, wi_counties, 
+     wi_airports, wi_roads, wi_10km, 
+     ash_bay_counties, my_special_crs_object, 
+     world_mercator, world_mollweide, world_ea, world_cust, 
+     temp, wi_airport_buffer, wi_counties_with_airport,
+     wi_county_points1, wi_county_points2, 
+     counties_simple_st, counties_simple_ms, wi_counties_valid)
+  
+# use gc() to free space in working memory
+  gc()
+```
+
+## Spatial Data Science Resources
+
+- [**Geocomputation With R**](https://r.geocompx.org/) by Robin Lovelace, Jakub Nowosad,
+  and Jannes Muenchow - comprehensive online resource on geographic data analysis,
+  visualization, and modeling.
+
+- [**Spatial Data Science**](https://r-spatial.org/book/) by Roger Bivand and Edzar
+  Pebesma - comprehensive online resource on geographic data analysis, visualization, and
+  modeling.
+
+- [**Hands-on Spatial Data Science with
+  R**](https://spatialanalysis.github.io/handsonspatialdata/index.html) by Luc Anselin,
+  Grant Morrison, Angela Li, Karina Acosta - guide to spatial data handling, exploratory
+  data analysis, spatial weights matrixes, and spatial statistics.
+
+- [**Spatial Analysis with R**](https://chiajung-yeh.github.io/Spatial-Analysis/) by Chia
+  Jung Yeh - comprehensive index of GIS concepts, spatial data operations, geometric
+  operations, spatial data procedures, mapping, and geocomputation.
+
+- [**Simple Features R Package (sf)**](https://r-spatial.github.io/sf/) - primary package
+  for manipulating vector-based spatial data in R.
+
+- [**TIGER/Line and cartographic boundary shapefiles ( R package
+  tigris)**](https://cran.r-project.org/web/packages/tigris/refman/tigris.html#tigris) - R
+  package to import a range of official US cartographic data.
+
+- [**Sample data sets R Package (spData)**](https://jakubnowosad.com/spData/) - R package
+  for example spatial data sets for practice.
+
+- [**The R Graph Gallery**](https://r-graph-gallery.com/) - Help and inspiration for
+  beautiful figures and maps made in R, with sample code and instruction.
+
+# Part 3: Population and Survey Data -
+
+With a basic foundation of spatial data types, coordinate reference systems, spatial
+processing, and spatial workflows, you now have the tools to integrate real-world social,
+health, and environmental data sets.
+
+## Import and Investigate Survey Data
+
+Let's first import the example health survey data set and investigate the variables. Note
+that this data is not real. It is generated data that mirrors the structure of a
+multi-wave health survey. It is not a shapefile or a GIS ready data set, per se. It is
+intented to demonstrate how to use a-spatial, tabular survey data, any associated
+spatially relevant variables (FIPS codes, longitude/latitude), and GIS processing in R to
+make the survey data into a GIS ready format for integration with environmental data.
+
+```{r sample_data1, echo=TRUE}
+# load provided survey data, survey_df
+    load(here("data","clean","sample_survey","survey_data.RData"))
+    
+# view column names
+    colnames(survey_df)
+
+# view metadata
+    class(survey_df)
+    str(survey_df)
+```
+
+You can further investigate the data by viewing it as a table by running `View(survey_df)`
+in the Console pane, or clicking on the object in the Environment pane. Beware of the
+View() command with very large data sets, especially spatial ones (100+ columns, 10,000+
+rows, multi-polygon geometries)!
+
+The survey data has some spatial identifiers. Lets see if we can map the data.
+
+```{r sample_data2, echo=TRUE, error=TRUE}
+# plot geometry
+  ggplot() +
+    geom_sf(data = survey_df) +
+    theme_minimal()
+```
+
+Oops an error! That was expected, as the survey data has tabular geographic identifier
+variables and lat/long variables, but no actual spatial geometries or metadata (class sf,
+assigned CRS, etc.). Looks like we will have to make some changes to the standard
+dataframe before we merge air quality data.
+
+## Import and Investigate Population Data
+
+Next, we import population level longitudinal data from the US Census Bureau's American
+Community Survey. This data is formatted as a time series and is structured very similarly
+to many other population data products. We will use the [`tidycensus`
+package](https://walker-data.com/tidycensus/index.html) to access a US Census Bureau API
+and download data from the American Community Survey. You can get your own Census API key
+from <https://api.census.gov/data/key_signup.html>. First, let's install our API key.
+
+**BE SURE TO EDIT THE BELOW CODE WITH YOUR NEWLY GENERATED CENSUS API KEY!**
+
+1.  Replace the "paste your API key here" text with your new API key.
+
+2.  Remove the #hashtag in front of the `my_api_key <- c(...)` command.
+
+3.  Run the code chunk.
+
+```{r tidycensus1, echo=TRUE}
+# install census API
+  #my_api_key <- c("paste your API Key here")
+  #census_api_key(my_api_key)
+```
+
+**NOTE:** An alternative census data API is the `impumsr` package. `ipumsr` gives access
+to a range of useful IPUMS data sets. Specifically, the IPUMS National Historic Geographic
+Information System (NHGIS) data aggregated population data is useful for GIS purposes.
+These data have lots of decennial census time series data that is processed and harmonized
+to standard US Census geographic boundaries. [Learn about IPUMS
+here](https://www.ipums.org). Learn about NHGIS here. [Learn about `ipumsr`
+here](https://tech.popdata.org/ipumsr/index.html).
+
+Next, we will use `tidycensus` to import aggregated ACS data. `tidycensus` can show you
+all the available variables for the decennial census, the ACS, and other useful data sets.
+Let's look at the available 2020 ACS tables and variables by saving them to a data.frame
+and using the `View()` function in the console, or clicking the object in the
+"Environment" tab.
+
+```{r tidycensus2, echo=TRUE}
+# view available variables
+  acs_2020 <- load_variables(2020, "acs5", cache = TRUE)
+```
+
+When viewing the dataframe, you can search for specific concepts at the top. The geography
+field indicates the lowest level of census geography that the variable is available.
+
+```{r tidycensus3, echo=TRUE, results='hide'}
+# import 2020
+  my_df <- get_acs(geography = "tract",      # level of aggregation
+                   state = "WI",             # restrict to certain state
+                   year = 2020,              # year of data
+                   variables = "B17020_002", # variable name (poverty status)
+                   geometry = TRUE)          # include geometries
+```
+
+```{r tidycensus3.5, echo=FALSE}
+# inspect
+  str(my_df)
+  crs(my_df)
+```
+
+Great! We now have ACS data, and it is spatial! But, it is only for one year, at one level
+of geography, and for one variable. Let's perform the same process, but over and over
+again using a `for` loop so we can make a time series data frame. The steps are:
+
+1.  Make your `for` loop helper objects, such as empty lists, vectors of variables,
+    looping parameters, etc.
+2.  Run your `for` loop to import data for each year and level of geography.
+
+The for loop will import, clean, and format ACS data for each year set in the parameters,
+and save each geog/year tabular data to a list of data frames. Saving data as lists can
+help with later processing, and is a memory efficient way to store larger data sets.
+
+```{r tidycensus4, echo=TRUE, results='hide'}
+# ---- Make loop objects ----
+# make vector of variables
+  acs_var_list <- c("B01003_001", # tot_pop
+                    "B25064_001", # med_gross_rent
+                    "B17020_002", # poverty status
+                    "B19013_001") # med_hh_income
+
+# make vector of desired years
+  years <- c(2014:2023)
+
+# make vector of desired geographies
+  geographies <- c("county", "tract", "cbg")
+
+# make vector of block group counties to reduce data size
+  cbg_filter <- c("55027", "55131", "55089",
+                  "55025", "55055", "55133", "55079",
+                  "55105", "55127", "55101", "55059")
+
+# make empty lists for each geography
+  acs_county <- list()
+  acs_tract <- list()
+  acs_cbg <- list()
+
+# ---- Run for loop ----
+  for (g_i in geographies) { # for each geography level
+    for (y_i in years) {     # and each year
+      
+    # values to name objects within loop iteration
+      geog_value <- g_i
+      year_value <- as.character(y_i)
+      
+    # pull data from API by year and geography
+      temp <- get_acs(geography = g_i,
+                      state = "WI",
+                      year = y_i,
+                      variables = acs_var_list,
+                      geometry = FALSE)
+      
+    # make helper vars and geo identifiers
+      temp <- temp |> 
+        mutate(county_fips = str_sub(GEOID, 1, 5)) |> 
+        mutate(geog_level = geog_value) |> 
+        mutate(year = y_i)
+      
+    # if cbg, then filter to certain counties
+      temp <- temp |> 
+        filter(if (geog_value == "cbg") county_fips %in% cbg_filter else year > 0)
+      
+    # drop margin of error variable and long name
+      temp <- temp |>
+        dplyr::select(-c(moe, NAME)) 
+      
+    # pivot wider
+      temp <- temp |> 
+        tidyr::pivot_wider(names_from = variable, values_from = estimate) 
+      
+    # rename ACS table vars
+      temp <- temp |> 
+        rename(tot_pop = B01003_001,
+               med_gross_rent = B25064_001,
+               pov_status = B17020_002,
+               med_hh_income = B19013_001)
+      
+      # append data to correct list based on geography
+      if (geog_value == "county") acs_county[[paste0(geog_value,"_",year_value)]] <- temp
+      if (geog_value == "tract") acs_tract[[paste0(geog_value,"_",year_value)]] <- temp
+      if (geog_value == "cbg") acs_cbg[[paste0(geog_value,"_",year_value)]] <- temp
+      
+    # clean up environment
+      rm(geog_value, year_value)
+    }}
+
+# ---- Clean up Environment ----
+  rm(temp, acs_2020, g_i, y_i, geographies, years, acs_var_list)
+```
+
+We now have a time series of aggregated ACS data. This data structure is similar to other
+population-level data sets you might encounter. Today, we are using ACS 2014 to 2023 data.
+`tidycensus` associates geographies nominally - that is, it uses the census designation
+and boundary that existed at the time of data collection. For tracts and block groups, the
+2014-2023 data use the 2010 Census boundary definitions. Let's examine the data for
+several years and geographies.
+
+```{r tidycensus5, echo=TRUE}
+# view column names
+  str(acs_county[["county_2014"]])
+  str(acs_tract[["tract_2018"]])
+```
+
+We imported tabular attribute data in this loop because the geometry columns in sf R
+objects can be quite large, especially for timeseries data. To get shapefiles for the
+analysis, we will instead import master shapefiles in a later step. Once we import and
+process the various years and geographic levels of population data in its tabular
+attribute form, we will merge it with spatial geometries from master shapefiles and and
+convert it to a sf R object.
+
+***Note:*** Geographic boundaries often change over time. New counties are carved out of
+existing ones. Census tracts are dissolved together or split apart. This is tricky
+business with spatially designated timeseries data. The NHGIS data from IPUMS is *one
+option* for getting longitudinal data that is harmonized to consistent boundaries. But,
+NHGIS data is often limited to commonly used decennial variables. In practice, harmonizing
+your data and geographic boundaries is tough work. For today, we are sticking with a time
+span that uses the same boundaries. Future workshops may address the issue of boundary
+changes...
+
+## Import Master Shapefiles
+
+The next step is to import the geographic boundary files that you will apply to all of
+your spatial data. We will run some diagnostics on the shapefiles to make sure they are
+suitable for the project, we will simplify them to the appropriate level of cartographic
+generalization, and validate and repair any topological errors in the geometry columns. We
+will import shapefiles from tidycensus.
+
+```{r, tidycensus6, echo=FALSE, results='hide'}
+# ---- Import Shapefiles ----
+# import for county, tract, and block group
+# drop any superfluous columns
+# generate fips ID columns
+
+# county
+  sf_county_2010 <- get_acs(geography = "county",
+                            state = "WI",
+                            year = 2010,
+                            variables = "B01003_001",
+                            geometry = TRUE)
+  
+  sf_county_2010 <- sf_county_2010 |> 
+    dplyr::select(GEOID) |> 
+    mutate(county_fips = GEOID,
+           geo_year = 2010)
+
+# tract
+  sf_tract_2010 <- get_acs(geography = "tract",
+                           state = "WI",
+                           year = 2010,
+                           variables = "B01003_001",
+                           geometry = TRUE)
+  
+  sf_tract_2010 <- sf_tract_2010 |> 
+    dplyr::select(GEOID) |> 
+    mutate(county_fips = str_sub(GEOID, 1, 5)) |> 
+    mutate(tract_fips = GEOID,
+           geo_year = 2010)
+
+# cbg
+  sf_cbg_2010 <- get_acs(geography = "cbg",
+                         state = "WI",
+                         year = 2015, # still uses 2010 boundaries
+                         variables = "B01003_001",
+                         geometry = TRUE)
+  
+  sf_cbg_2010 <- sf_cbg_2010 |> 
+    dplyr::select(GEOID) |> 
+    mutate(county_fips = str_sub(GEOID, 1, 5)) |> 
+    mutate(tract_fips = str_sub(GEOID, 1, 11)) |> 
+    mutate(cbg_fips = GEOID,
+           geo_year = 2010) |> 
+    filter(county_fips %in% cbg_filter)
+```
+
+### Investigate master shapefiles
+
+Let's look at the shapefile metadata for our geographic boundaries.
+
+```{r, tidycensus7, echo=TRUE}
+# confirm all CRS are the same for all shapefiles
+  st_crs(sf_county_2010) == st_crs(sf_tract_2010)
+  st_crs(sf_county_2010) == st_crs(sf_cbg_2010)
+  st_crs(sf_tract_2010) == st_crs(sf_cbg_2010)
+  
+# view CRS metadata
+  st_crs(sf_county_2010)
+  
+# map each level of geography 
+  ggplot() +
+    geom_sf(data = sf_tract_2010,
+            color = "royalblue") +
+    geom_sf(data = sf_county_2010,
+            color = "black",
+            fill = "lightblue",
+            linewidth = 0.5) +
+    geom_sf(data = sf_cbg_2010,
+            color = "gray20",
+            fill = "lightyellow",
+            linewidth = 0.5) +
+    labs(title = "Wisconsin Census Boundaries",
+         subtitle = "Counties (black)  | tracts (blue)  | block groups (yellow)") +
+    theme_minimal()
+```
+
+### Establish a master CRS for this project
+
+The master shapefiles all use the coordinate reference system NAD83: North American Datum
+1983 (or, EPSG 4269. The projection is set to center the maps on central Wisconsin. This
+seems like an appropriate CRS, so we will set this as the master CRS for our project.
+
+```{r, tidycensus8, echo = TRUE}
+# set project CRS     
+  master_crs <- st_crs(sf_county_2010)
+```
+
+### Simplify vector and line data
+
+`tidycensus` has [lots of
+options](https://walker-data.com/tidycensus/articles/spatial-data.html) for which types of
+shapefiles to import and how detailed thier cartographic generalization is. Our county,
+tract, and blockgroup geometries could use a bit of simplifying. We will us `rmapshaper`
+to retain boundaries and other topological features of the data.
+
+```{r, tidycensus9, echo = TRUE}
+# simplify county     
+  sf_county_2010 <- ms_simplify(
+    sf_county_2010, # sf object to simplify
+    keep = 0.05, # proportion of vertices to retain
+    snap = TRUE, # snap vertices at small distances to fix misallignment
+    keep_shapes = TRUE) # prevent small shapes from disappearing (islands)
+  
+# simplify tract
+  sf_tract_2010 <- ms_simplify(
+    sf_tract_2010, # sf object to simplify
+    keep = 0.05, # proportion of vertices to retain
+    snap = TRUE, # snap vertices at small distances to fix misallignment
+    keep_shapes = TRUE) # prevent small shapes from disappearing (islands)
+  
+# simplify cbg
+  sf_cbg_2010 <- ms_simplify(
+    sf_cbg_2010, # sf object to simplify
+    keep = 0.05, # proportion of vertices to retain
+    snap = TRUE, # snap vertices at small distances to fix misallignment
+    keep_shapes = TRUE) # prevent small shapes from disappearing (islands)
+  
+# map simplified geometries 
+  ggplot() +
+    geom_sf(data = sf_tract_2010,
+            color = "royalblue") +
+    geom_sf(data = sf_county_2010,
+            color = "black",
+            fill = "lightblue",
+            linewidth = 0.5) +
+    geom_sf(data = sf_cbg_2010,
+            color = "gray20",
+            fill = "lightyellow",
+            linewidth = 0.5) +
+    labs(title = "Wisconsin Census Boundaries",
+         subtitle = "Counties (black)  | tracts (blue)  | block groups (yellow)") +
+    theme_minimal()
+```
+
+The resulting map is still legible, and the boundaries plot much better along rivers and
+coastlines.
+
+### Repair and validate geometries
+
+To round out our spatial data management and best practices, we will ensure that our
+geometries are valid and repair them if they are not.
+
+```{r, tidycensus10, echo=TRUE}
+# check to see if each geometry value in sf_county_2010 is valid
+  st_is_valid(sf_county_2010, reason = TRUE)
+
+# logical check that every geometry value validation is "Valid Geometry"
+# avoids masive console output
+  all((st_is_valid(sf_county_2010, reason = TRUE)) == "Valid Geometry")
+  all((st_is_valid(sf_tract_2010, reason = TRUE)) == "Valid Geometry")
+  all((st_is_valid(sf_cbg_2010, reason = TRUE)) == "Valid Geometry")
+```
+
+Looks good! Moving forward!
+
+***Note:*** Geometries can be corrupted after lots of geometry operations, such as joins,
+masking, overlaps, etc. If you are doing these types of activities, it is a good idea to
+check for valid geometries often. Also, shapefiles from non-standard sources may have
+issues with their metadata and geometries, so always check these things out upon import.
+
+# Part 4: Gridded Smoke Data -
+
+[The Environmental Change and Human Outcomes Lab](https://www.stanfordecholab.com/data) at
+Stanford produced [daily estimates of smoke-attributable
+PM2.5](https://www.stanfordecholab.com/wildfire_smoke) at the county, tract, ZCTA, and
+10km grid levels. The data spans 2006 to 2023. They estimated these values by processing
+very high-frequency raster-based air quality data from the [United States high-frequency
+PM2.5 air quality data set](https://zenodo.org/records/7884640), and computing the
+difference between "expected" background PM2.5 pollution, and observed PM2.5 measured by
+stationary sensors during known fire and smoke events. ECHOLab defined smoke events using
+smoke plume polygon shapefiles from the [NOAA Hazard Mapping
+System](https://www.ospo.noaa.gov/products/land/hms.html#data). See ECHOLab's
+[methodological details
+here](https://web.stanford.edu/~mburke/papers/ChildsEtAl2022_smoke.pdf).
+
+This is a great and easy-to-use data product because it comes in a pre-processed, vector
+format. ECHOLab estimated smoke-derived PM2.5, and also performed the challenging
+raster-to-vector GIS processing to aggregate daily estimates for useful spatial units.
+Using each of the 10km, tract, and county estimates, we can more easily append
+wildfire-related air pollution to our population and survey data.
+
+### Download ECHOLab Data
+
+We need to download the ECHOLab smoke data. We will download data at the County, tract,
+and 10km grid levels. Open your preffered web browser and follow the three steps below:
+
+1.  Navigate to the ECHOLab [county data dropbox data
+    repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AOADXrl5470J9uGaxpkOniA/county?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
+    Download the .rds file titled
+    "smokePM2pt5_predictions_daily_county_20060101-20231231.rds". Save it in the following
+    folder: data/raw/echolab.
+
+2.  Navigate to the ECHOLab [tract data dropbox data
+    repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AIRVst386qB2G_N1XhnE4qk/tract?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
+    Download the .rds file titled
+    "smokePM2pt5_predictions_daily_tract_20060101-20231231.rds". Save it in the following
+    folder: data/raw/echolab.
+
+3.  Navigate to the ECHOLab [10km grid dropbox data
+    repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AFwRS_BfKyaayrr9J1mU0PY/10km_grid?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
+    Download the .rds file titled
+    "smokePM2pt5_predictions_daily_10km_20060101-20231231.rds". Save it in the following
+    folder: data/raw/echolab.
+
+4.  Navigate to the ECHOLab [10km grid dropbox data
+    repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AFwRS_BfKyaayrr9J1mU0PY/10km_grid?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
+    Download the *entire folder* titled "10km_grid_wgs84". Save it in the following
+    folder: data/raw/echolab. If it is zipped, unzip it.
+
+### File paths and study parameters
+
+Next, let's define the file paths to the ECHOLab data and set the space/time parameters
+for the our study. We will make a list of dates that define every day that we want to
+import smoke data. We include December 2013 so we can calculate running 30 day averages
+for the first month of 2014. We also will define the study start and end dates, and define
+vector lists of county FIPS and tract FIPS for our study area (just Wisconsin boundaries).
+
+```{r, echolab1, echo=TRUE}
+# write filepaths to smoke data
+  echo_10km_path <- here("data","raw","echo_lab",
+                         "smokePM2pt5_predictions_daily_10km_20060101-20231231.rds")
+  
+  echo_10km_grid <- here("data","raw","echo_lab",
+                         "10km_grid_wgs84/10km_grid_wgs84.shp")
+  
+  echo_county_path <- here("data","raw","echo_lab",
+                                "smokePM2pt5_predictions_daily_county_20060101-20231231.rds")
+  
+  echo_tract_path <- here("data","raw","echo_lab",
+                          "smokePM2pt5_predictions_daily_tract_20060101-20231231.rds")
+
+# prepare analysis parameters
+  all_dates = seq.Date(ymd("2013-12-01"), ymd("2023-12-31"), by = "day")
+  
+  start_date <- ymd("2013-12-01")
+  end_date   <- ymd("2023-12-31")
+  
+  study_counties <- sf_county_2010$GEOID
+  study_tracts <- sf_tract_2010$GEOID
+```
+
+### Import pre-processed county and tract PM2.5 data
+
+Let's start by importing the pre-processed ECHOLab data for counties and tracts. We will
+run a script that imports the data for the entire US and filters it to our study date
+range and spatial extent. Data processing steps include:
+
+1.  Read in the tabular RDS file for county and tracts.
+
+2.  Filter out any dates before or after the start of our study period.
+
+3.  Reduce the spatial extent of the data to just counties and tracts in Wisconsin.
+
+We do not need to do any spatial data operations at this point because the tabular data
+from ECHOLab has county and tract identifiers as variables. So, we can simply filter out
+any county and tract not in our defined `study_counties` and `study_tracts` vectors. Note
+that the script often uses the garbage collection `gc()` command. It is helpful to perform
+this after you filter large amounts of data, as R will still store filtered cases in
+background working memory.
+
+```{r, echolab2, echo=TRUE, results='hide'}
+# ---- County data ---- 
+# Load smokePM2.5 predictions on smoke days
+  smoke_county <- readRDS(echo_county_path)
+  str(smoke_county)
+  
+# filter raw data to only years needed
+  smoke_county <- smoke_county |> 
+    filter(date %within% interval(start_date, end_date))
+  gc()
+
+# filter to only counties in WI using FIPS codes
+  smoke_county <- smoke_county |> 
+    filter(GEOID %in% study_counties)
+  gc()
+
+# ---- Tract data ----
+# Load smokePM2.5 predictions on smoke days
+  smoke_tract <- readRDS(echo_tract_path)
+  str(smoke_tract)
+
+# filter raw data to only years needed
+  smoke_tract <- smoke_tract |> 
+    filter(date %within% interval(start_date, end_date))
+  gc()
+
+# filter to only tracts in WI using FIPS codes
+  smoke_tract <- smoke_tract |> 
+    filter(GEOID %in% study_tracts)
+  gc()
+```
+
+The ECHOLab data does not keep a record for days when smoke-derived PM2.5 is zero. So, we
+have to do some data wrangling to generate records for these days in the tract and county
+data sets. We can do this by "crossing" the list of counties or tracts with the list of
+each date from 2014 to 2023. This generates a blank data frame where each row is defined
+by unique date/FIPS combination with every date in the study period.
+
+Then we will `left_join()` the ECHOLab data to this date/FIPS dataframe, joined by the
+geographic identifier and the date variables. For days without smoke-derived PM2.5 we
+simply mutate the smoke variable from NA to 0.
+
+```{r, echolab3, echo=TRUE, results='hide'}
+# ---- Generate county smoke data for all dates ---- 
+# get full combination of county/dates with expand.grid()
+# Warning: this may require a large amount of memory with multiple years and states
+  county_days = expand.grid(GEOID = study_counties, date = all_dates)
+
+# Match smoke predictions on smoke days to county/date
+  smoke_county = left_join(county_days, smoke_county, by = c("GEOID", "date"))
+
+# Predict 0 for NA county/date days, which are non-smoke days
+  smoke_county = mutate(smoke_county, smokePM_pred = replace_na(smokePM_pred, 0))
+  
+# clean environment
+  rm(county_days)
+  gc()
+
+# ---- Generate tract smoke data for all dates ---- 
+# get full combination of tract/dates
+# warning: this may require a large amount of memory if multiple years and states
+  tract_days = expand.grid(GEOID = study_tracts, date = all_dates)
+
+# Match smoke predictions on smoke days to tract/date
+  smoke_tract = left_join(tract_days, smoke_tract, by = c("GEOID", "date"))
+
+# Predict 0 for NA tract/date days, which are non-smoke days
+  smoke_tract = mutate(smoke_tract, smokePM_pred = replace_na(smokePM_pred, 0))
+
+# clean environment 
+  rm(tract_days)
+  gc()
+```
+
+At this stage, we have comprehensive, county- and tract-level tabular data on daily smoke
+derived PM2.5 smoke for the state of Wisconsin.
+
+### Import pre-processed 10km PM2.5 data
+
+Now let's import and prepare the 10km gridded data set. Recall that the 10km data is in
+gridded, vector format. That means that the vector polygon geometries consist of the exact
+same 10km X 10km dimensions, arranged in a grid pattern. Similar to how ECHOLab estimates
+smoke-derived PM2.5 values for county and tract polygons, they do the same for the uniform
+10km grid polygons. They also assign each grid polygon a unique grid identification code
+and include it in the RDS tabular data as a variable.
+
+Again, we will reduce this data to just the dates and locations that we need for our study
+extent. Filtering out extraneous dates is straightforward. But, the 10km gridded data does
+not have any location identifiers that allow us to reduce the data to just Wisconsin using
+tabular data wrangling. We could read in the entire 10km grid data set, convert it to a sf
+R object, and and try to use it in its full size. But the data set is very large. More
+efficient way to do this - especially for scaling or in repeated processing - would be to
+reduce the 10km grid polygons to just those that cover the state of Wisconsin. To process
+the 10km gridded data to just those that cover the study timeframe and the stae of
+Wisconsin, we will take the following steps:
+
+1.  Import the full tabular data for smoke at the 10km grid level, and reduce to just the
+    days present in our study period.
+
+```{r, echolab4, echo=TRUE, results='hide'}
+# Load smokePM2.5 predictions on smoke days
+  preds <- readRDS(echo_10km_path)
+  str(preds)
+
+# reduce raw data to years needed
+  preds <- preds |> 
+    filter(date %within% interval(start_date, end_date))
+
+# free memory
+  gc()
+```
+
+2.  Generate a shapefile for the boundary of Wisconsin using `tidyverse` conventions and
+    `st_union()`.
+
+```{r, echolab5, echo=TRUE}
+# collapse WI counties to one border
+  sf_wi <- sf_county_2010 |> 
+    mutate(state = "WI") |> 
+    group_by(state) |> 
+      summarise(geometry = st_union(geometry)) |> 
+    ungroup()
+
+# confirm collapse
+  ggplot() +
+    geom_sf(data = sf_wi) +
+    labs(title = "Wisconsin Counties disolved to border") +
+    theme_minimal()
+```
+
+3.  Import the shapefile for the 10km grid and format it with the `master_crs`.
+
+```{r, echolab6, echo=TRUE}
+# Load 10 km grid
+  grid_10km = read_sf(echo_10km_grid)
+  plot(grid_10km$geometry)
+
+# does 10km_grid have same CRS as master_crs?
+  st_crs(grid_10km) == master_crs
+
+# reproject to master_crs
+  grid_10km <- st_transform(grid_10km, master_crs)
+  st_crs(grid_10km) == master_crs
+```
+
+4.  Use `sf::st_intersection()` to reduce the full `grid_10km` shapefile to just grid
+    polygons that are within or cross the boundary into Wisconsin.
+
+```{r, echolab7, echo=TRUE}
+# make a dataframe with just the grids that fall within or on the WI border
+  sf_wi_10km <- st_intersection(grid_10km, sf_wi)
+
+# plot to confirm
+  ggplot() +
+    geom_sf(data = sf_wi_10km, 
+            color = "forestgreen", 
+            fill = NA) +
+    geom_sf(data = sf_wi, 
+            color = "blue", 
+            fill = NA) +
+    labs(title = "Wisconsin state boundary",
+         subtitle = "10km ECHOLab grid overlay") +
+    theme_minimal()
+
+# remove full grid database
+  rm(grid_10km,
+     temp)
+  gc()
+```
+
+5.  Finally, we will take the tabular smoke prediction data and generate a comprehensive
+    tabular data set of all dates/counties for the study extent, and perform some data
+    wrangling.
+
+```{r, echolab8, echo=TRUE}
+# Get full combination of grid cell-days
+# Warning: this may require a large amount of memory if performing on multiple years and states
+  days_by_10km = expand.grid(grid_id_10km = sf_wi_10km$ID, date = all_dates)
+
+# Match smoke predictions on smoke days to grid cell-days
+  smoke_10km = left_join(days_by_10km, preds, by = c("grid_id_10km", "date"))
+
+# Predict 0 for remaining grid cell-days, which are non-smoke days
+  smoke_10km = mutate(smoke_10km, smokePM_pred = replace_na(smokePM_pred, 0))
+  
+# generate helper variables for 10km grid
+  smoke_10km <- smoke_10km |> 
+    arrange(grid_id_10km, date) |> 
+    mutate(year = year(date),
+           prior_30 = (date - 30),
+           prior_7 = (date - 7),
+           window_30day = interval(start = prior_30, end = date),
+           window_7day = interval(start = prior_7, end = date))
+  
+# clean up environment
+  rm(days_by_10km, 
+     preds)
+```
+
+Use `View()` to check out the data structure of the county, tract, and 10km smoke data.
+
+We now have daily smoke-derived PM2.5 to analyze at the county, tract, and 10km grid level
+in tabular form. The tract and county ECHOLab data can be easily integrated into any
+county and tract level data using standard FIPS geographic identifiers. The 10km tabular
+data will need to be converted to an `sf` R object using the `sf_wi_10km` shapefile before
+integrating with county, tract, and individual-level data.
+
+# Part 5: Data Integration -
+
+Recall that our ultimate goal is to associate the high-frequency air quality data with
+each record in the population data and the survey data. We have completed the steps to
+format the ECHOLab data to easily merge with census data and survey data. Let's explore
+some use cases and different ways to integrate the ECHOLab data.
+
+## Use Case #1: County-level Annual Average PM2.5
+
+Note that the county ECHOLab data have GEOID fields. We can easily merge them to our
+county ACS data without using any GIS processing. Before merging, we can do any necessary
+data wrangling to the `smoke_county` data set. To compute a county-level annual average,
+we will complete the following steps:
+
+1.  Wrangle the ECHOLab tabular data to generate the necessary helper variables and
+    summary measures, like averages.
+
+2.  `left_join()` the summary measures to the ACS time series population data using date
+    and FIPS variables.
+
+3.  `right_join()` county geometries to the tabular ACS data and generate some simple maps
+    as a sanity check.
+
+```{r, use_case_1a, echo=TRUE}
+# Use Case #1 - Annual average, county level ----
+# -- Data wrangling ----
+# generate helper variables
+  smoke_county <- smoke_county |> 
+    arrange(GEOID, date) |> 
+    mutate(year = year(date),
+           prior_30 = (date - 30),
+           prior_7 = (date - 7),
+           window_30day = interval(start = prior_30, end = date),
+           window_7day = interval(start = prior_7, end = date))
+
+# make annual PM2.5 average
+  county_annual_avg <- smoke_county |> 
+    group_by(GEOID, year) |> 
+      arrange(date) |> 
+      mutate(annual_pm25_average = mean(smokePM_pred, na.rm = TRUE),
+             annual_pm25_max = max(smokePM_pred, na.rm = TRUE)) |> 
+    ungroup()
+
+# reduce to 1 column per year
+  county_annual_avg <- county_annual_avg |> 
+    dplyr::select(GEOID, year, annual_pm25_average, annual_pm25_max) |> 
+    distinct()
+
+# stack ACS timeseries data
+  county_pop_data <- bind_rows(acs_county)
+  str(county_pop_data)
+
+# merge to county by year and GEOID
+  county_pop_data <- left_join(county_pop_data, county_annual_avg, by = c("GEOID", "year"))
+  str(county_pop_data)
+
+# -- Make ACS data spatial ----
+# right_join master county shapefile
+  county_pop_data <- right_join(sf_county_2010, county_pop_data, by = "GEOID")
+  str(county_pop_data)
+
+# -- Clean up environment ----
+  rm(county_annual_avg)
+```
+
+`county_pop_data` now has PM2.5 smoke data, calculated as the annual average and annual
+max. The `str()` command show the dataframe column names through the process as we
+integrate data. Now, map the two variables to see data integration in action!
+
+```{r, use_case_1b, echo=TRUE}
+# Use Case #1 - Annual average, county level ----
+# -- Map to confirm ----
+# average
+  ggplot() +
+  # data layer on botom
+    geom_sf(data = county_pop_data, 
+            color = "gray80",
+            aes(fill = annual_pm25_average)) +
+  # labels
+    labs(title = "County-level Smoked-derived PM2.5",
+         subtitle = "Annual average from 2014 to 2023",
+         caption = "Data source: ECHOLab Smoke-derived PM2.5 air quality",
+         fill = "Annual PM2.5\nAverage") +
+  # state border layer on top
+    geom_sf(data = sf_wi,
+            color = "black",
+            fill = NA) +
+  # separate map for each value in the county_data_pop$year column
+    facet_wrap(~year) +
+  # general aestetic design for figure
+    theme_void()
+
+# max
+  ggplot() +
+    # data layer on botom
+    geom_sf(data = county_pop_data, 
+            color = "gray80",
+            aes(fill = annual_pm25_max)) +
+    # labels
+    labs(title = "County-level Smoked-derived PM2.5",
+         subtitle = "Annual Maximum from 2014 to 2023",
+         caption = "Data source: ECHOLab Smoke-derived PM2.5 air quality",
+         fill = "Annual\nPM2.5 Maximum") +
+    # state border layer on top
+    geom_sf(data = sf_wi,
+            color = "black",
+            fill = NA) +
+    # separate map for each value in the county_data_pop$year column
+    facet_wrap(~year) +
+    # general aestetic design for figure
+    theme_void()
+```
+
+## Use Case #2: Tract-level Seasonal Average PM2.5
+
+This example is similar to the first. We use the tract/date tabular data to compute a
+seasonal rather than annual average, merge it with the ACS population time series data,
+and make a few plots. Also, since we are using tract geography, we will reduce to just a
+few counties in the Southeast corner of the state, which includes the Milwaukee
+metropolitan area.
+
+```{r, use_case_2, echo=TRUE}
+# Use Case #2: Seasonal average, tract level ----
+# -- Data Wrangling ----
+# generate helper variables
+  smoke_tract <- smoke_tract |> 
+    arrange(GEOID, date) |> 
+    mutate(year = year(date),
+           prior_30 = (date - 30),
+           prior_7 = (date - 7),
+           window_30day = interval(start = prior_30, end = date),
+           window_7day = interval(start = prior_7, end = date))
+
+# make seasonal average
+  spring <- (3:5)
+  summer <- (6:8)
+  fall <- (9:11)
+  winter1 <- (12)
+  winter2 <- (1:2)
+  
+  tract_seasonal_average <- smoke_tract |> 
+    mutate(month = month(date),
+           season = case_when(month %in% spring ~ "Spring",
+                              month %in% summer ~ "Summer",
+                              month %in% fall ~ "Fall",
+                              month %in% winter1 ~ "Winter",
+                              month %in% winter2 ~ "Winter"))
+  
+  tract_seasonal_average <- tract_seasonal_average |> 
+    group_by(GEOID, year, season) |> 
+      arrange(date) |> 
+      mutate(seasonal_pm25_average = mean(smokePM_pred, na.rm = TRUE),
+             seasonal_pm25_max = max(smokePM_pred, na.rm = TRUE)) |> 
+    ungroup()
+
+# reduce to 1 row per year/season
+  tract_seasonal_average <- tract_seasonal_average |> 
+    dplyr::select(GEOID, year, season, seasonal_pm25_average, seasonal_pm25_max) |> 
+    distinct()
+
+# stack ACS timeseries data
+  tract_pop_data <- bind_rows(acs_tract)
+
+# merge to tract by year and GEOID
+  tract_pop_data <- left_join(tract_pop_data, tract_seasonal_average, by = c("GEOID", "year"))
+
+# -- Make data spatial ----
+# right_join master county shapefile
+  tract_pop_data <- right_join(sf_tract_2010, tract_pop_data, by = "GEOID")
+
+# -- Map to confirm ----
+# reduce to fewer counties and a single year, for plotting
+  tract_pop_sample <- tract_pop_data |> 
+    filter(county_fips.x %in% cbg_filter) |> 
+    filter(year == 2018)
+  
+# average
+  ggplot() +
+    # data layer on botom
+    geom_sf(data = tract_pop_sample, 
+            color = "gray80",
+            aes(fill = seasonal_pm25_average)) +
+    # labels
+    labs(title = "Tract-level Smoke-derived PM2.5",
+         subtitle = "Seasonal average for years 2014 to 2023",
+         caption = "Data source: ECHOLab Smoke-derived PM2.5 air quality",
+         fill = "Seasonal PM2.5\nAverage") +
+    # separate map for each value in the county_data_pop$year column
+    facet_wrap(~season) +
+    # general aestetic design for figure
+    theme_void()
+  
+# max
+  ggplot() +
+    # data layer on botom
+    geom_sf(data = tract_pop_sample, 
+            color = "gray80",
+            aes(fill = seasonal_pm25_max)) +
+    # labels
+    labs(title = "Tract-level Smoke-derived PM2.5",
+         subtitle = "Seasonal Maximum for years 2014 to 2023",
+         caption = "Data source: ECHOLab Smoke-derived PM2.5 air quality",
+         fill = "Seasonal PM2.5\n Maximum") +
+    # separate map for each value in the county_data_pop$year column
+    facet_wrap(~season) +
+    # general aestetic design for figure
+    theme_void()
+
+# -- Inspect urban spaces ----
+  mke_counties <- c("55079")
+  
+  tract_mke <- tract_pop_sample |> 
+    filter(county_fips.x %in% mke_counties)
+  
+# average in Milwaukee county
+  ggplot() +
+    # data layer on botom
+    geom_sf(data = tract_mke, 
+            color = "gray80",
+            aes(fill = seasonal_pm25_average)) +
+    # labels
+    labs(title = "Milwaukee Area Tract-level Smoke-derived PM2.5",
+         subtitle = "Seasonal average for years 2014 to 2023",
+         caption = "Data source: ECHOLab Smoke-derived PM2.5 air quality",
+         fill = "Seasonal PM2.5\nAverage") +
+    # separate map for each value in the county_data_pop$year column
+    facet_wrap(~season) +
+    # general aestetic design for figure
+    theme_void()
+
+# clean environment
+rm(tract_seasonal_average, tract_pop_sample, tract_mke)
+```
+
+## Use Case #3: Individual-level Running Averages and Exposure
+
+Use cases #3 and #4 will test the limits of gridded, vector-based data. While vector-based
+are exceptional for population level data - which is typically aggregated to
+administrative boundaries - it may not be at the geographic specificity needed for
+individual-level survey data. The first consideration is what spatial scale do you want to
+capture the measure of environmental exposure? This should be driven by your research
+question and any empirical or theoretical basis for how you are conceptualizing the
+environmental exposure. In multiple steps, we will demonstrate data integration at the
+county, tract, and 10km scales.
+
+### Prepare running averages in the smoke data
+
+Before we do any data integration, let's prepare our smoke data by generating variables
+for running averages and mins/max at all geographic levels. We are using the `slider`
+package to compute running averages on tabular data. Note that the data must be grouped by
+the geographic identifier (grid_id for the 10km gridded data, and GEOID for county and
+tract data) and then arranged by the date variable. The `slider::slide_dbl()` function
+then calculates some summary statistic for each date based on the values of the previous
+dates, as determined by the parameters. This function can take some time to complete.
+
+Recall that when we imported the ECHOLab smoke data, we included a December 2013. That
+way, we could gather the running average for the first 30 days of 2014.
+
+```{r, use_case_3_dataWrangling, echo=TRUE}
+# -- 10km/tract/county running averages/min/max ----
+# NOTE: slider package for running averages
+# 10km grid
+  smoke_10km <- smoke_10km |> 
+    group_by(grid_id_10km) |> 
+    arrange(date) |> 
+    mutate(mean_30day = slide_dbl(smokePM_pred, mean,
+                                  .before = 30, .after = 0, .complete = TRUE),
+           max_30day = slide_dbl(smokePM_pred, max,
+                                 .before = 30, .after = 0, .complete = TRUE),
+           min_30day = slide_dbl(smokePM_pred, min,
+                                 .before = 30, .after = 0, .complete = TRUE),
+           mean_7day = slide_dbl(smokePM_pred, mean,
+                                 .before = 7, .after = 0, .complete = TRUE),
+           max_7day = slide_dbl(smokePM_pred, mean,
+                                .before = 7, .after = 0, .complete = TRUE),
+           min_7day = slide_dbl(smokePM_pred, mean,
+                                .before = 7, .after = 0, .complete = TRUE)) |> 
+    ungroup() |> 
+    arrange(grid_id_10km, date)
+  
+# tract
+  smoke_tract <- smoke_tract |> 
+    group_by(GEOID) |> 
+    arrange(date) |> 
+    mutate(mean_30day = slide_dbl(smokePM_pred, mean,
+                                  .before = 30, .after = 0, .complete = TRUE),
+           max_30day = slide_dbl(smokePM_pred, max,
+                                 .before = 30, .after = 0, .complete = TRUE),
+           min_30day = slide_dbl(smokePM_pred, min,
+                                 .before = 30, .after = 0, .complete = TRUE),
+           mean_7day = slide_dbl(smokePM_pred, mean,
+                                 .before = 7, .after = 0, .complete = TRUE),
+           max_7day = slide_dbl(smokePM_pred, mean,
+                                .before = 7, .after = 0, .complete = TRUE),
+           min_7day = slide_dbl(smokePM_pred, mean,
+                                .before = 7, .after = 0, .complete = TRUE)) |> 
+    ungroup() |> 
+    arrange(GEOID, date)
+
+# county
+smoke_county <- smoke_county |> 
+  group_by(GEOID) |> 
+  arrange(date) |> 
+  mutate(mean_30day = slide_dbl(smokePM_pred, mean,
+                                .before = 30, .after = 0, .complete = TRUE),
+         max_30day = slide_dbl(smokePM_pred, max,
+                               .before = 30, .after = 0, .complete = TRUE),
+         min_30day = slide_dbl(smokePM_pred, min,
+                               .before = 30, .after = 0, .complete = TRUE),
+         mean_7day = slide_dbl(smokePM_pred, mean,
+                               .before = 7, .after = 0, .complete = TRUE),
+         max_7day = slide_dbl(smokePM_pred, mean,
+                              .before = 7, .after = 0, .complete = TRUE),
+         min_7day = slide_dbl(smokePM_pred, mean,
+                              .before = 7, .after = 0, .complete = TRUE)) |> 
+  ungroup() |> 
+  arrange(GEOID, date)
+```
+
+### County/tract smoke data -\> survey data
+
+Since the tabular survey data is geocoded with tract and county FIPS identifiers, and the
+ECHOLab smoke data has tract and county FIPs identifiers, we can perform a simple tabular
+`left_join()` to integrate county and tract-level PM2.5 for each respondent's survey date.
+
+```{r, use_case_3_tabularjoin, echo=TRUE}
+# -- Tabular join smoke data by county-level GEOIDs and survey date ---- 
+# rename columns to match survey_points dataframe
+  temp <- smoke_county |> 
+    rename(county_fips = GEOID,
+           survey_date = date)
+  
+  survey_county <- left_join(survey_df,
+                             temp,
+                             by = c("county_fips", "survey_date"))
+
+# -- Tabular join smoke data by tract-level GEOIDs and survey date---- 
+# rename columns to match survey_points dataframe
+  temp <- smoke_tract |> 
+    rename(tract_fips = GEOID,
+           survey_date = date)
+  
+  survey_tract <- left_join(survey_df,
+                            temp,
+                            by = c("tract_fips", "survey_date"))
+```
+
+### 10km smoke data -\> survey data
+
+The county and tract level smoke data was straightforward to integrate with the survey
+data because both contained tabular geographic identifiers. However, the surevey data does
+not have a tabular idnetifier for the 10km grid polygon. So, we will have to use spatial
+data operations to assign the correct 10km grid ID to each survey record.
+
+The survey data contains variables for the precise lat/long of the respondent's home
+address (its okay! its tpy data!). You can use this geographic information to integrate
+10km gridded PM2.5 using spatial data operations following the steps below:
+
+1.  Convert the tabular survey data to a `sf` R object using `st_as_sf()`.
+
+2.  As a sanity check, map the survey data points by layering them over the 10km grid to
+    visualize where each respondent's lat/long fall into one of the 10km grid polygons.
+
+3.  Use `st_join()` to do the same "layering" process behind the scenes. `st_join()` takes
+    each respondent's point geometry, places it into a 10km polygon, and extracts the
+    corresponding 10km grid polygon's attribute data into the survey data. This will
+    assign the 10km grid identification number to every respondent, which we will then use
+    in a tabular merge to integrate the smoke data.
+
+4.  Finally, perform a `left_join()` based on the 10km grid ID variable and survey date
+    variable to integrate the tabular smoke_10km data into the survey data.
+
+```{r, use_case_3_spatialjoin, echo=TRUE}
+# -- Make Survey Data Spatial using lat/long variables ----
+# convert to sf_points object
+  survey_points <- st_as_sf(survey_df,
+                            coords = c("longitude", "latitude"),
+                            crs = master_crs) 
+  
+# -- map survey_points over 10km_grid to visualize st_join() procedure ----
+  ggplot() +
+    geom_sf(data = sf_wi_10km,
+            color = "gray80") +
+    geom_sf(data = survey_points,
+            color = "red",
+            size = 0.30) 
+
+# -- Place point in a 10km grid and extract grid polygon attributes ----
+# spatial join attributes from grid geometry into survey data rows
+  survey_points <- st_join(survey_points, sf_wi_10km) |> 
+    dplyr::select(-COORDY) |> 
+    dplyr::select(-COORDX)
+
+# -- Tabular join smoke data based on survey date and 10km grid id ----
+# rename columns to match survey_points dataframe
+  temp <- smoke_10km |> 
+    rename(ID = grid_id_10km,
+           survey_date = date)
+
+# left_join smoke data to survey data
+  survey_10km <- left_join(survey_points,
+                           temp,
+                           by = c("ID", "survey_date"))
+
+# clean up environment
+  rm(temp, survey_points)
+```
+
+Now, we have basic smoke data for each respondent, matching the date they took each survey
+wave. We integrated data at three different levels: the county, tract, and 10km grid. The
+data is stored in three separate data frames, one for each level of geography
+(`survey_10km`, `survey_county`, and `survey_tract`).
+
+Investigate the data.frames using the `View(survey_10km)` function typed directly into the
+console.
+
+## Use Case #4: Spatial Buffer and Spatial Interpolation
+
+Use case \# 3 assigned county, tract, and 10km grid smoke data to each survey respondent
+record. The assignment was based on the precise lat/long of each respondents home address.
+Let's map a selection of these points over county and 10km grids to visualize the which
+county data and 10km grid data are assigned to each respondent.
+
+```{r, use_case_4_map1, echo=TRUE}
+# convert to sf_points object
+  survey_points <- st_as_sf(survey_df,
+                            coords = c("longitude", "latitude"),
+                            crs = master_crs)
+  
+# see extent of survey_buffer object for mapping purposes
+  st_bbox(survey_points)
+
+# map for sanity check
+  ggplot() + 
+    # grid layer
+    geom_sf(data = sf_wi_10km,
+            color = "gray80",
+            fill = NA) +
+    # county boundary layer
+    geom_sf(data = sf_county_2010,
+            color = "black",
+            fill = NA) +
+    # point layer
+    geom_sf(data = survey_points,
+            color = "red",
+            size = 0.5) +
+    # restrict plot to just lat/longs in northwest, based of of st_bbox() output
+    coord_sf(xlim = c(-92.86145, -89), 
+             ylim = c(45.5, 46.81861)) +
+    # labels
+    labs(title = "Respondent address location",
+         subtitle = "placed in county and 10km grid context") +
+    theme_void()
+```
+
+Note that some points fall along county borders. Perhaps the county average is not an
+appropriate measure of smoke exposure. What if a respondent lives in the very corner of a
+large county, and does most of their daily living across the county border?
+
+Or, what if they live at the very corner of a 10km grid? Is the smoke exposure value for
+that single 10km grid the best measure for that respondent? In both cases, wouldn't we
+want some information about the grids or counties nearby?
+
+To address this, we can generate distance buffers around point geometries and use spatial
+data operations to gather the smoke data from the areas within the buffers. This is
+opposed to relying on nominally assigned aggregated data, like counties or 10km polygons.
+This process is called spatial interpolation. It is useful when standard geographies are
+not quite appropriate for your exposure measure.
+
+Let's perform a spatial interpolation step by step, and through the process highlight some
+examples for why this is a useful procedure.
+
+### Generate buffer polygons around point data
+
+First, we will convert the point data to a custom distance buffer polygon. Examine the
+shapefile's CRS to see which units the projection uses.
+
+```{r, use_case_4_crsunits, echo=TRUE}
+# check for units in survey_points crs
+  st_crs(survey_points)
+```
+
+In our case, the CRS uses meters (LENGTHUNIT["metre",1]). Let's generate a buffer of 20km
+diameter around each point, and map them over the 10km grid and the county boundaries.
+
+```{r, use_case_4_buffermap, echo=TRUE}
+# -- Make buffer polygon ----
+# 10km radus, 20km diameter
+  survey_buffer <- st_buffer(survey_points, dist = 10000) 
+  
+# map for sanity check
+  ggplot() + 
+  # grid layer
+    geom_sf(data = sf_wi_10km,
+            color = "gray80",
+            fill = NA) +
+  # county boundary layer
+    geom_sf(data = sf_county_2010,
+            color = "black",
+            fill = NA) +
+  # buffer layer
+    geom_sf(data = survey_buffer,
+            color = "red",
+            fill = "red",
+            alpha = 0.1) +
+  # point layer
+    geom_sf(data = survey_points,
+            color = "red",
+            size = 0.3) +
+  # zoom to just a few counties in northwest
+    coord_sf(xlim = c(-92.86145, -89), 
+             ylim = c(45.5, 46.81861)) +
+  # labels
+    labs(title = "Respondent address buffer",
+         subtitle = "20km radius") +
+    theme_void()
+```
+
+### Interpolate smoke data for each buffer
+
+We will use `st_interpolate_aw()` to calculate smoke values based on the 10km grids that
+fall within the buffer polygon, ***NOT*** based just on the single 10km grid that the
+lat/long falls within. `st_interpolate_aw()` performs and area-weighted interpolation of
+underlying polygon data. This means that the area of each underlying polygon that you are
+extracting data from serves as the weight when when calculating the average of the
+underlying polygon data. A grid that is only 1% covered by the 20km buffer contributes an
+appropriately sized share to the average.
+
+Because we need to repeat this procedure for many different dates, we will perform the
+interpolation in a `for` loop, executing the `st_interpolate_aw()` day by day. This
+process will take a few minutes becasue we are inefficiently performing many spatial
+interpolation procedures over and over. This procedure will produce accurate results, but
+showcases the limits of vector based data integration procedures over many cases,
+variables, or with timeseries data.
+
+Let's define the for loop parameters:
+
+1.  Define an empty list object to store interpolated data from each loop iteration.
+
+2.  Define a list of the dates in the survey data that we need to access in the smoke_10km
+    data.frame.
+
+3.  Define the smoke_10km variables we want to extract
+
+```{r, use_case_4_forloopparamerters, echo=TRUE}
+# -- For Loop parameters ----
+# empty list object
+  survey_list <- list()
+
+# list of dates in survey data
+  survey_dates <- survey_df |> 
+    dplyr::select(survey_date) |> 
+    group_by(survey_date) |> 
+    slice(1) |> 
+    ungroup()
+  
+  survey_dates <- c(survey_dates$survey_date)
+
+# for testing, use below survey_dates with few dates
+# replace 3 with some number to sample smaller N of dates
+  # survey_dates <- sample(survey_dates$survey_date, 3, replace = FALSE)
+
+# list of variables to merge
+  smoke_vars <- c("smokePM_pred",
+                  "mean_30day",
+                  "mean_7day")
+```
+
+Then, run the loop. The loop performs the following processes for each date in the survey
+data:
+
+1.  Reduce the survey data and the smoke_10km data to a single date.
+
+2.  Use `right_join()` with tabular `smoke_10km` and shapefile `sf_wi_10km` to spatialize
+    the smoke data.
+
+3.  Perform a spatial interpolation on the smoke variables.
+
+4.  Append the interpolated averages back to the tabular survey_buffer data.
+
+5.  Save that date's data to a list.
+
+```{r, use_case_4_forloop, echo=TRUE}
+# -- For loop to perform spatial interopolation ----
+# for every date in the survey...
+  for (d_i in survey_dates) {
+  # make temporary naming object
+    date_name <- c(d_i)
+    
+  # filter the survey_buffer data to a single date, d_i
+    survey_temp <- survey_buffer |> 
+      filter(survey_date == d_i)
+    
+  # skip to next date if no records exist in survey_temp
+  # (this is a sanity check. Our survey_dates list of dates is defined 
+  # from the actual data source, so there should not be iteration that 
+  # does not have data.)
+    if (nrow(survey_temp) == 0) next
+    
+  # filter smoke_10km data to single date, d_i
+    smoke_temp <- smoke_10km |> 
+      filter(date == d_i) |> 
+      rename(ID = grid_id_10km)
+    
+  # make smoke_temp spatial
+    smoke_temp <- right_join(sf_wi_10km, smoke_temp, by = "ID") |> 
+      dplyr::select(smoke_vars)
+    
+  # use_st_interpolate_aw() function
+    temp <- st_interpolate_aw(smoke_temp, survey_temp, extensive = FALSE)
+    
+  # append interpolated columns to survey_temp
+    survey_temp$pm25_w_avg <- temp$smokePM_pred
+    survey_temp$mean_30day_w_avg <- temp$mean_30day
+    survey_temp$mean_7day_w_avg <- temp$mean_7day
+    
+  # append to list
+    survey_list[[paste0(d_i,"weighted_avg")]] <- survey_temp
+    
+  # clean up
+    rm(survey_temp,
+       temp,
+       smoke_temp)
+    
+  } # close for loop
+
+  gc()
+```
+
+Finally, let's stack the list objects for each individual date back into a standard
+dataframe. Use `View()` to examine the `survey_buffer` data and newly created
+`pm25_w_avg`, `mean_30day_w_avg`, and `mean_7day_w_avg` variables.
+
+```{r, use_case_4_stack, echo=TRUE}
+# stack interpolated dataframe
+survey_buffer <- bind_rows(survey_list)
+```
+
+## Compare different levels of data integration
+
+Let's make a final data set, `survey_final`, that has the county level, tract level, 10km
+grid level, and interpolated buffer level measures of smoke data.
+
+```{r, ecombine_and_compare, echo=TRUE}
+# -- Compare Point-level differences ----
+# ---- Combine all smokePM_pred values into one df ----
+
+# make our final survey data set
+  survey_final <- as.data.frame(survey_buffer)
+
+# append 10km_grid level to final
+  temp <- as.data.frame(survey_10km) |>  
+    dplyr::select(respondent_ID, ID, survey_wave, smoke_vars) |> 
+    rename(grid_id = ID,
+           pm25_grid = smokePM_pred,
+           mean_30day_grid = mean_30day,
+           mean_7day_grid = mean_7day)
+  
+  survey_final <- left_join(survey_final, temp, by = c("respondent_ID", "survey_wave"))
+
+# traappend tract level to final
+  temp <- as.data.frame(survey_tract) |>  
+    dplyr::select(respondent_ID, survey_wave, smoke_vars) |> 
+    rename(pm25_tract = smokePM_pred,
+           mean_30day_tract = mean_30day,
+           mean_7day_tract = mean_7day)
+  
+  survey_final <- left_join(survey_final, temp, by = c("respondent_ID", "survey_wave"))
+
+# append county level to final
+  temp <- as.data.frame(survey_county) |> 
+    dplyr::select(respondent_ID, survey_wave, smoke_vars) |> 
+    rename(pm25_county = smokePM_pred,
+           mean_30day_county = mean_30day,
+           mean_7day_county = mean_7day)
+  
+  survey_final <- left_join(survey_final, temp, by = c("respondent_ID", "survey_wave"))
+```
+
+Now, we have a single data frame where, for each respondent, we have measures of smoke
+exposure captured at county, tract, 10km grid, and the 10km weighted average based on the
+20km point buffer. Perform any comparisons or robustness checks using these variables the
+same way you might in any tabular data set. Additionally, because the data is spatial, you
+can account for spatial relationships in your analyses using spatial regression
+techniques.
+
+# Concluding Remarks -
+
+The above case studies demonstrate typical ways to integrate gridded, vector-based
+high-frequency spatio-temporal data with population and survey data. They demonstrate the
+process using both standardized geographic boundaries and identifiers (county and tract
+FIPS) as well as non-standard geographic identifiers (10km grids).
+
+Gridded environmental data is an accessible, low-demand way to integrate environmental
+data into social science, population, and health research. The above workflow may vary
+from data set to data set, but is largely applicable to vector-based gridded data.
+
+Finally, note that vector-based gridded data is not typically generated at the finest
+level of spatial and temporal specificity. If you require environmental data that is
+specific to the hour, specific to a small area (meters, not miles), or expansive over very
+wide ranges and time frames, then raster-based environmental data may be necessary.
+Processing raster-based data requires additional R packages, more computing power
+including parallel processing, and data storage solutions. See the resources in Part 1:
+Raster Data, and the below resources. Many entries have guidance on processing
+raster-based environmental data.
+
+# Resources -
+
+[**Geospatial Health Data: Modeling and Visualization with R-INLA and
+Shiny**](https://www.paulamoraga.com/book-geospatial/index.html) by Paula Moraga -
+Advanced geospatial and spatio-temporal processing and analysis using INLA.
+
+[**R Graphics Codebook**](https://r-graphics.org/) - Comprehensive guide on tweaking any
+and all aspects of figures in R.
+
+[**UW-Madison Social Science Computing
+Cooperative**](https://sscc.wisc.edu/sscc/pubs/r_programming/) - a range of R programming
+resources from the Social Science Computing Cooperative at the University of
+Wisconsin-Madison.
+
+[**YaRrr! The Pirate’s Guide to
+R**](https://nathanieldphillips-yarrr.share.connect.posit.cloud/) by Nathaniel D.
+Phillips - learn R from the ground up! The pirate theme is a bonus...
+
+[**R for Data Science (2e)**](https://r4ds.hadley.nz/) by Hadley Wickham - comprehensive
+guide to data wrangling in R using the tidyverse coding conventions.
+
+[**Introduction to R -
+tidyverse**](https://bansell-wehi-tidyr-course-book.share.connect.posit.cloud/) by Brendan
+R. E. Ansell - comprehensive guide to data wrangling, plotting, and programming in R using
+the tidyverse coding conventions.
