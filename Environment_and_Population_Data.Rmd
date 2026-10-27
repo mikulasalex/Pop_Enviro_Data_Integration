@@ -1367,25 +1367,23 @@ and 10km grid levels. Open your preffered web browser and follow the three steps
 1.  Navigate to the ECHOLab [county data dropbox data
     repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AOADXrl5470J9uGaxpkOniA/county?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
     Download the .rds file titled
-    "smokePM2pt5_predictions_daily_county_20060101-20231231.rds". Save it in the following
-    folder: data/raw/echolab.
+    "smokePM2pt5_predictions_daily_county_20060101-20231231.rds". Save it in data folder.:
+    data/raw/echolab.
 
 2.  Navigate to the ECHOLab [tract data dropbox data
     repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AIRVst386qB2G_N1XhnE4qk/tract?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
     Download the .rds file titled
-    "smokePM2pt5_predictions_daily_tract_20060101-20231231.rds". Save it in the following
-    folder: data/raw/echolab.
+    "smokePM2pt5_predictions_daily_tract_20060101-20231231.rds". Save it in data folder.
 
 3.  Navigate to the ECHOLab [10km grid dropbox data
     repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AFwRS_BfKyaayrr9J1mU0PY/10km_grid?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
     Download the .rds file titled
-    "smokePM2pt5_predictions_daily_10km_20060101-20231231.rds". Save it in the following
-    folder: data/raw/echolab.
+    "smokePM2pt5_predictions_daily_10km_20060101-20231231.rds". Save it in data folder.
 
 4.  Navigate to the ECHOLab [10km grid dropbox data
     repository](https://www.dropbox.com/scl/fo/91k0aq80vp57qixkm508q/AFwRS_BfKyaayrr9J1mU0PY/10km_grid?dl=0&rlkey=nutebc9pn2vsupr0p9ks4k73u&subfolder_nav_tracking=1).
-    Download the *entire folder* titled "10km_grid_wgs84". Save it in the following
-    folder: data/raw/echolab. If it is zipped, unzip it.
+    Download the *entire folder* titled "10km_grid_wgs84". Save the folder and its
+    contents in the data folder. If it is zipped, unzip it.
 
 ### File paths and study parameters
 
@@ -1397,16 +1395,15 @@ vector lists of county FIPS and tract FIPS for our study area (just Wisconsin bo
 
 ```{r, echolab1, echo=TRUE}
 # write filepaths to smoke data
-  echo_10km_path <- here("data","raw","echo_lab",
+  echo_10km_path <- here("data", 
                          "smokePM2pt5_predictions_daily_10km_20060101-20231231.rds")
   
-  echo_10km_grid <- here("data","raw","echo_lab",
-                         "10km_grid_wgs84/10km_grid_wgs84.shp")
+  echo_10km_grid <- here("data", "10km_grid_wgs84", "10km_grid_wgs84.shp")
   
-  echo_county_path <- here("data","raw","echo_lab",
-                                "smokePM2pt5_predictions_daily_county_20060101-20231231.rds")
+  echo_county_path <- here("data", 
+                           "smokePM2pt5_predictions_daily_county_20060101-20231231.rds")
   
-  echo_tract_path <- here("data","raw","echo_lab",
+  echo_tract_path <- here("data", 
                           "smokePM2pt5_predictions_daily_tract_20060101-20231231.rds")
 
 # prepare analysis parameters
