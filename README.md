@@ -8,6 +8,6 @@ To follow along with the training in your own RStudio environment,
   2. Install R on your machine. Download R here: https://cloud.r-project.org/
   3. Install RStudio on your machine here: https://docs.posit.co/ide/user/#rstudio-ide-oss-downloads
   4. Unzip the folder and double click the .RProj file to open the project.
-  5. View the Environment_and_Populatipon_Data.Rmd file in RStudio, using the "Visual" view setting rather than the "Source" view setting.
+  5. View the Environment_and_Population_Data.Rmd file in RStudio, using the "Visual" view setting rather than the "Source" view setting.
   6. Follow instructions in the .Rmd file.
 
