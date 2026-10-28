@@ -1,7 +1,7 @@
 # Pop_Enviro_Data_Integration
 Materials for the 2026 PAA Virtual Workshop Series titled Population and Environment Research - Linking Gridded Environmental Data to Public Population Data.
 
-To view the knitted HTML document for this workshop, download the file titled: Environment_and_Population_Data.html. Open the file in a web browser.
+View the knitted HTML document for this workshop here: https://mikulasalex.github.io/Pop_Enviro_Published/
 
 To follow along with the training in your own RStudio environment, 
   1. Download the contents of this repository and place all in a folder of your choice. Retain the folder structure. 
